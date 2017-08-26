@@ -6,8 +6,14 @@ from flask_cors import CORS                 # Cross Origin Resource Sharing
 from solc import compile_files              # Python wrapper for the Solidity compiler
 from web3 import Web3, TestRPCProvider      # Python implementation of Web3 to interact with the blockchain
 
+# flask server
 app = Flask(__name__)
+
+# cross origin resource sharing
 CORS(app)
+
+# testrpc
+web3 = Web3(TestRPCProvider())
 
 ''' IPFS '''
 
@@ -60,23 +66,33 @@ def get_params():
 	return jsonify(params)
 
 '''
-	Create a new owner.
+	Fetch the existing owner.
 
-	- returns an address to a new account
+	- returns an address to the owner
 '''
-@app.route(ROUTE_DRFP + '/account/create/owner')
+@app.route(ROUTE_DRFP + '/account/owner')
 def create_owner():
-	return web3.eth.account[0]
+	return web3.eth.accounts[0]
 
 '''
-	Create a new bidder.
+	Fetch an existing bidder.
 
-	- returns an address to a new account
+	- returns an address to the bidder
 '''
-@app.route(ROUTE_DRFP + '/account/create/bidder/<id>')
-def create_bidder():
-	# guard condition greater than 0
-	return web3.eth.account[int(request.form['id'])]
+@app.route(ROUTE_DRFP + '/account/bidder/<int:id>')
+def create_bidder(id):
+	MIN_ID = 1
+	MAX_ID = 9
+
+	if id < MIN_ID:
+		print('WARNING: %s is LESS THAN the min: %s' % (id, MIN_ID))
+		return web3.eth.accounts[MIN_ID]
+
+	if id > MAX_ID:
+		print('WARNING: %s is GREATER THAN the max: %s' % (id, MAX_ID))
+		return web3.eth.accounts[MAX_ID]
+
+	return web3.eth.accounts[id]
 
 
 # TODO dummy endpoint
