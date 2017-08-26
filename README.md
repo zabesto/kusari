@@ -9,7 +9,7 @@
 pip install flask
 pip install ipfsapi
 pip install py-solc
-pip install web3[tester]
+pip install web3
 
 # install solidity
 brew install node
