@@ -6,7 +6,7 @@ import time
 from flask import Flask, jsonify, request   # Python microframework
 from solc import compile_files              # Python wrapper for the Solidity compiler
 from io import FileIO
-from web3 import Web3, TestRPCProvider      # Python implementation of Web3 to interact with the blockchain
+from web3 import Web3, HTTPProvider         # Python implementation of Web3 to interact with the blockchain
 
 DEBUG = True
 
@@ -14,7 +14,7 @@ DEBUG = True
 app = Flask(__name__)
 
 # testrpc
-web3 = Web3(TestRPCProvider())
+testrpc = Web3(HTTPProvider('http://localhost:8545'))
 
 ''' IPFS '''
 
@@ -39,7 +39,6 @@ def upload(file):
 
 	# upload to ipfs
 	printd('uploading file...')
-	# result = ipfs.add('README.md')
 	result = ipfs.add('temp_file')
 
 	return result
@@ -89,7 +88,10 @@ def get_params():
 '''
 @app.route(ROUTE_DRFP + '/account/owner')
 def create_owner():
-	return jsonify(web3.eth.accounts[0])
+	for account in testrpc.eth.accounts:
+		printd(account)
+
+	return jsonify(testrpc.eth.accounts[0])
 
 '''
 	Fetch an existing bidder.
@@ -103,13 +105,13 @@ def create_bidder(id):
 
 	if id < MIN_ID:
 		print('WARNING: %s is LESS THAN the min: %s' % (id, MIN_ID))
-		return web3.eth.accounts[MIN_ID]
+		return testrpc.eth.accounts[MIN_ID]
 
 	if id > MAX_ID:
 		print('WARNING: %s is GREATER THAN the max: %s' % (id, MAX_ID))
-		return web3.eth.accounts[MAX_ID]
+		return testrpc.eth.accounts[MAX_ID]
 
-	return jsonify(web3.eth.accounts[id])
+	return jsonify(testrpc.eth.accounts[id])
 
 '''
 	Returns the request data.
@@ -149,7 +151,7 @@ def create_drfp():
 
     # fetch the instance of the contract
 	printd('fetching transaction for smart contract instance...')
-	trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
+	trans_receipt = testrpc.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
 	global rfc_instance
 	rfc_instance = DRFPContract(contract_addr)
@@ -191,9 +193,15 @@ def get_contract_dummy():
 
 	return jsonify(data)
 
-@app.route(ROUTE_DRFP + '/contract/<contract_addr>')
-def get_contract(contract_addr):
-	DRFPContract(contract_addr)
+@app.route(ROUTE_DRFP + '/contract')
+def get_contract():
+	instance = DRFPContract('0xc305c901078781c232a2a521c2af7980f8385ee9')
+
+	owner = instance.call({'from':'0x82a978b3f5962a5b0957d9ee9eef472ee55b42f1'}).bidManager()
+	printd(owner)
+
+	return owner
+
 
 def compile_drfp_sol():
 	CONTRACT_NAME = 'drfp'
@@ -204,7 +212,7 @@ def compile_drfp_sol():
 	COMPILED = compile_files([FILE_NAME])
 	RFP = COMPILED[FILE_NAME + ':' + CONTRACT_NAME]
 	global DRFPContract
-	DRFPContract = web3.eth.contract(
+	DRFPContract = testrpc.eth.contract(
         abi = RFP['abi'],
         bytecode = RFP['bin'],
         bytecode_runtime = RFP['bin-runtime']
