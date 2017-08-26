@@ -9,14 +9,13 @@ require(`quasar/dist/quasar.${__THEME}.css`)
 // Uncomment the following lines if you need IE11/Edge support
 // require(`quasar/dist/quasar.ie`)
 // require(`quasar/dist/quasar.ie.${__THEME}.css`)
-
+import axios from 'axios'
 import Vue from 'vue'
 import Quasar from 'quasar'
 import router from './router'
-
 Vue.config.productionTip = false
 Vue.use(Quasar) // Install Quasar Framework
-
+Vue.prototype.$http = axios
 if (__THEME === 'mat') {
   require('quasar-extras/roboto-font')
 }
