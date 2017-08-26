@@ -1,15 +1,19 @@
-import ipfsapi                           # Peer to Peer distributed storage
+import ipfsapi                              # Peer to Peer distributed storage
 import json
 
-from flask import Flask, jsonify         # Python microframework
-from solc import compile_files           # Python wrapper for the Solidity compiler
-from web3 import Web3, TestRPCProvider   # Python implementation of Web3 to interact with the blockchain
+from flask import Flask, jsonify, request   # Python microframework
+from flask_cors import CORS                 # Cross Origin Resource Sharing
+from solc import compile_files              # Python wrapper for the Solidity compiler
+from web3 import Web3, TestRPCProvider      # Python implementation of Web3 to interact with the blockchain
 
 app = Flask(__name__)
+CORS(app)
 
 ''' IPFS '''
 
-@app.route('/ipfs/upload')
+ROUTE_IPFS='/ipfs'
+
+@app.route(ROUTE_IPFS + '/upload')
 def upload():
     FILE_NAME = ''
 
@@ -20,6 +24,8 @@ def upload():
 
 ''' Web3 '''
 
+ROUTE_DRFP='/drfp'
+
 # DRFP params
 DRFP_ACCOUNT='account'
 DRFP_NAME='name'
@@ -29,15 +35,14 @@ DRFP_ADVERTISING='advertisingStart'
 DRFP_BIDDING='biddingStart'
 DRFP_REVEAL='revealStart'
 DRFP_AWARD='awardDate'
-DRFP_SPEC='spec'
-DRFP_TEMPLATE='template'
+DRFP_FILE='file'
 
 '''
 	Return the DRFP parameters.
 
 	- returns the DRFP parameters as a json string
 '''
-@app.route('/drfp/params')
+@app.route(ROUTE_DRFP + '/params')
 def get_params():
 	end_periods = {}
 	end_periods[DRFP_ADVERTISING] = 'uint'
@@ -50,13 +55,37 @@ def get_params():
 	params[DRFP_NAME] = 'String'
 	params[DRFP_WHITELIST] = '[String]'
 	params[DRFP_ENDPERIODS] = end_periods
-	params[DRFP_SPEC] = 'file'
-	params[DRFP_TEMPLATE] = 'file'
+	params[DRFP_FILE] = 'file'
 
 	return jsonify(params)
 
 '''
-@app.route('/drfp/create', method=['POST'])
+	Create a new owner.
+
+	- returns an address to a new account
+'''
+@app.route(ROUTE_DRFP + '/account/create/owner')
+def create_owner():
+	return web3.eth.account[0]
+
+'''
+	Create a new bidder.
+
+	- returns an address to a new account
+'''
+@app.route(ROUTE_DRFP + '/account/create/bidder/<id>')
+def create_bidder():
+	# guard condition greater than 0
+	return web3.eth.account[int(request.form['id'])]
+
+
+# TODO dummy endpoint
+@app.route(ROUTE_DRFP + '/create', methods=['POST'])
+def create_drfp():
+	return jsonify(request.data)
+
+'''
+@app.route(ROUTE_DRFP + '/create', methods=['POST'])
 def create_drfp():
 
     # the smart contract
@@ -125,3 +154,44 @@ def get_args(params):
 '''
 def get_ipfs_hash(file):
 	return upload()['hash']
+
+def crossdomain(origin=None, methods=None, headers=None,
+                max_age=21600, attach_to_all=True,
+                automatic_options=True):
+    if methods is not None:
+        methods = ', '.join(sorted(x.upper() for x in methods))
+    if headers is not None and not isinstance(headers, basestring):
+        headers = ', '.join(x.upper() for x in headers)
+    if not isinstance(origin, basestring):
+        origin = ', '.join(origin)
+    if isinstance(max_age, timedelta):
+        max_age = max_age.total_seconds()
+
+    def get_methods():
+        if methods is not None:
+            return methods
+
+        options_resp = current_app.make_default_options_response()
+        return options_resp.headers['allow']
+
+    def decorator(f):
+        def wrapped_function(*args, **kwargs):
+            if automatic_options and request.method == 'OPTIONS':
+                resp = current_app.make_default_options_response()
+            else:
+                resp = make_response(f(*args, **kwargs))
+            if not attach_to_all and request.method != 'OPTIONS':
+                return resp
+
+            h = resp.headers
+
+            h['Access-Control-Allow-Origin'] = origin
+            h['Access-Control-Allow-Methods'] = get_methods()
+            h['Access-Control-Max-Age'] = str(max_age)
+            if headers is not None:
+                h['Access-Control-Allow-Headers'] = headers
+            return resp
+
+        f.provide_automatic_options = False
+        return update_wrapper(wrapped_function, f)
+    return decorator
