@@ -56,7 +56,11 @@
       <router-view /> component
       if using subRoutes
     -->
-    <router-view />
+    <div class="layout-padding row justify-center">
+      <div style="width: 800px; max-width: 90vw;">
+        <router-view></router-view>
+      </div>
+    </div>
   </q-layout>
 </template>
 
