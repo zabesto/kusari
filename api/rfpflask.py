@@ -54,6 +54,7 @@ DRFP_OWNER = 'manager'
 DRFP_NAME = 'name'
 DRFP_WHITELIST = 'whitelist'
 DRFP_PERIODS = 'periods'
+DRFP_ADVERTISING = 'advertising'
 DRFP_BIDDING = 'bidding'
 DRFP_REVEAL = 'reveal'
 DRFP_AWARD = 'award'
@@ -88,7 +89,7 @@ def get_params():
 '''
 @app.route(ROUTE_DRFP + '/account/owner')
 def create_owner():
-	return web3.eth.accounts[0]
+	return jsonify(web3.eth.accounts[0])
 
 '''
 	Fetch an existing bidder.
@@ -108,7 +109,7 @@ def create_bidder(id):
 		print('WARNING: %s is GREATER THAN the max: %s' % (id, MAX_ID))
 		return web3.eth.accounts[MAX_ID]
 
-	return web3.eth.accounts[id]
+	return jsonify(web3.eth.accounts[id])
 
 '''
 	Returns the request data.
@@ -150,14 +151,10 @@ def create_drfp():
 	printd('fetching transaction for smart contract instance...')
 	trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
-	rfc_contract = DRFPContract(contract_addr)
+	global rfc_instance
+	rfc_instance = DRFPContract(contract_addr)
 
-	printd('calling result...')
-	RESULT = rfc_contract.call(
-        {'from': web3.eth.coinbase}
-    )
-
-	return jsonify(RESULT)
+	return jsonify(contract_addr)
 
 # smart contract params
 SC_NAME = DRFP_NAME
@@ -213,6 +210,8 @@ def compile_drfp_sol():
         bytecode_runtime = RFP['bin-runtime']
     )
 
+	printd(DRFPContract)
+
 '''
 	Construct the args from the given params for the contract.
 
@@ -232,10 +231,10 @@ def get_args(params):
 
 	# construct args
 	args = []
-	args.append(params[DRFP_ACCOUNT])
 	args.append(params[DRFP_OWNER])
 	args.append(params[DRFP_NAME])
 	args.append(file_hash)
+	args.append(int(periods[DRFP_ADVERTISING]))
 	args.append(int(periods[DRFP_BIDDING]))
 	args.append(int(periods[DRFP_REVEAL]))
 	args.append(int(periods[DRFP_AWARD]))
