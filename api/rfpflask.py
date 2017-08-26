@@ -4,17 +4,14 @@ import json
 import time
 
 from flask import Flask, jsonify, request   # Python microframework
-from flask_cors import CORS                 # Cross Origin Resource Sharing
 from solc import compile_files              # Python wrapper for the Solidity compiler
+from io import FileIO
 from web3 import Web3, TestRPCProvider      # Python implementation of Web3 to interact with the blockchain
 
 DEBUG = True
 
 # flask server
 app = Flask(__name__)
-
-# cross origin resource sharing
-CORS(app)
 
 # testrpc
 web3 = Web3(TestRPCProvider())
@@ -29,27 +26,38 @@ ROUTE_IPFS='/ipfs'
 ipfs = ipfsapi.connect(HOST_IPFS, PORT_IPFS)
 
 def upload(file):
-	BASE64_PREFIX = 'data:text/markdown;base64,'
-	base64_file = file.replace(BASE64_PREFIX)
-	result = ipfs.add(base64.b64decode(file))
+	# decode file
+	printd('decoding file...')
+	BASE64_PREFIX = 'data:text/markdown;base64,'   # TODO update to use regex
+	base64_file = file.replace(BASE64_PREFIX, '')
+	decoded_file = base64.b64decode(base64_file)
 
-	return jsonify(result)
+	# write to temp file
+	printd('creating temp file...')
+	with FileIO('temp_file', 'w') as temp_file:
+		temp_file.write(decoded_file)
+
+	# upload to ipfs
+	printd('uploading file...')
+	# result = ipfs.add('README.md')
+	result = ipfs.add('temp_file')
+
+	return result
 
 ''' Web3 '''
 
 ROUTE_DRFP='/drfp'
 
 # DRFP params
-DRFP_ACCOUNT='account'
-DRFP_OWNER='owner'
-DRFP_NAME='name'
-DRFP_WHITELIST='whitelist'
-DRFP_ENDPERIODS='endPeriods'
-DRFP_ADVERTISING='advertisingStart'
-DRFP_BIDDING='biddingStart'
-DRFP_REVEAL='revealStart'
-DRFP_AWARD='awardDate'
-DRFP_FILE='file'
+DRFP_ACCOUNT = 'account'
+DRFP_OWNER = 'manager'
+DRFP_NAME = 'name'
+DRFP_WHITELIST = 'whitelist'
+DRFP_PERIODS = 'periods'
+DRFP_BIDDING = 'bidding'
+DRFP_REVEAL = 'reveal'
+DRFP_AWARD = 'award'
+DRFP_FILE = 'file'
 
 '''
 	Return the DRFP parameters.
@@ -58,18 +66,17 @@ DRFP_FILE='file'
 '''
 @app.route(ROUTE_DRFP + '/params')
 def get_params():
-	end_periods = {}
-	end_periods[DRFP_ADVERTISING] = 'uint'
-	end_periods[DRFP_BIDDING] = 'uint'
-	end_periods[DRFP_REVEAL] = 'uint'
-	end_periods[DRFP_AWARD] = 'uint'
+	periods = {}
+	periods[DRFP_BIDDING] = 'uint'
+	periods[DRFP_REVEAL] = 'uint'
+	periods[DRFP_AWARD] = 'uint'
 
 	params = {}
 	params[DRFP_ACCOUNT] = 'String'
 	params[DRFP_OWNER] = 'String'
 	params[DRFP_NAME] = 'String'
 	params[DRFP_WHITELIST] = '[String]'
-	params[DRFP_ENDPERIODS] = end_periods
+	params[DRFP_PERIODS] = periods
 	params[DRFP_FILE] = 'file'
 
 	return jsonify(params)
@@ -113,53 +120,69 @@ def create_drfp_dummy():
 	return jsonify(request.data)
 
 '''
-	Create a new DRFP.a
+	Create a new DRFP.
 
 
 	- returns the results
 
 '''
-'''
 @app.route(ROUTE_DRFP + '/create', methods=['POST'])
 def create_drfp():
 	DEPLOY_COST = 4000000
 
+	request_body = request.get_json()
+	owner_addr = request_body[DRFP_ACCOUNT]
+	printd(owner_addr)
+
     # extract args from request
-	printd('extracting args...')
-	owner_addr = request.form[DRFP_ACCOUNT]
-	args = get_args(request.data)
+	printd('convert to json...')
+	printd(jsonify(request_body))
+	args = get_args(request_body)
 
     # deploy the contract to the blockchain
+	printd('deploying...')
 	trans_hash = DRFPContract.deploy(
         args=args,
         transaction={'from':owner_addr, 'gas':DEPLOY_COST}
     )
 
     # fetch the instance of the contract
+	printd('fetching transaction for smart contract instance...')
 	trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
 	rfc_contract = DRFPContract(contract_addr)
 
+	printd('calling result...')
 	RESULT = rfc_contract.call(
         {'from': web3.eth.coinbase}
     )
 
 	return jsonify(RESULT)
-'''
+
+# smart contract params
+SC_NAME = DRFP_NAME
+SC_OWNER = DRFP_OWNER
+SC_ADDR = 'managerAddress'
+SC_LINK = 'specLink'
+SC_PERIODS = DRFP_PERIODS
+SC_BIDDING = DRFP_BIDDING
+SC_REVEAL = DRFP_REVEAL
+SC_AWARD = DRFP_AWARD
+SC_WHITELIST = DRFP_WHITELIST
 
 @app.route(ROUTE_DRFP + '/contract/dummy')
 def get_contract_dummy():
 	data = {}
-	data['name'] = 'Contruct12'
-	data['manager'] = 'rishabh'
-	data['managerAddress'] = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNA3DQEBAQUAA4GNqGKukO1De7zhZj6+H0q'
-	data['specLink'] = 'https://www.google.com/'
+	data[SC_NAME] = 'Contruct12'
+	data[SC_OWNER] = 'rishabh'
+	data[SC_ADDR] = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNA3DQEBAQUAA4GNqGKukO1De7zhZj6+H0q'
+	data[SC_LINK] = 'https://www.google.com/'
 
 	periods = {}
-	periods['bidding'] = int(round(time.time() * 1000))
-	periods['reveal'] = int(round(time.time() * 1000))
-	periods['award'] = int(round(time.time() * 1000))
-	data['periods'] = periods
+	periods[SC_BIDDING] = int(round(time.time() * 1000))
+	periods[SC_REVEAL] = int(round(time.time() * 1000))
+	periods[SC_AWARD] = int(round(time.time() * 1000))
+	data[SC_PERIODS] = periods
 
 	whitelist = []
 	whitelist.append("MIGfMA0GCSqGSIb")
@@ -167,7 +190,7 @@ def get_contract_dummy():
 	whitelist.append("3DQEBAQUAA4GN")
 	whitelist.append("ukO1De7zhZj6+")
 
-	data['whitelist'] = whitelist
+	data[SC_WHITELIST] = whitelist
 
 	return jsonify(data)
 
@@ -198,18 +221,24 @@ def compile_drfp_sol():
 	- returns the args as a [String]
 '''
 def get_args(params):
+	printd('extracting args...')
+
 	# get ipfs hash for spec and template
-	file_hash = upload(params[DRFP_FILE])
+	upload_results = upload(params[DRFP_FILE])
+	file_hash = upload_results['Hash']
+
+	# get nested periods
+	periods = params[DRFP_PERIODS]
 
 	# construct args
 	args = []
+	args.append(params[DRFP_ACCOUNT])
 	args.append(params[DRFP_OWNER])
 	args.append(params[DRFP_NAME])
 	args.append(file_hash)
-	args.append(params[DRFP_ADVERTISING])
-	args.append(params[DRFP_BIDDING])
-	args.append(params[DRFP_REVEAL])
-	args.append(params[DRFP_AWARD])
+	args.append(int(periods[DRFP_BIDDING]))
+	args.append(int(periods[DRFP_REVEAL]))
+	args.append(int(periods[DRFP_AWARD]))
 
 	return args
 
@@ -234,4 +263,4 @@ def printd(msg):
 	print '##########   %s   ##########' % (msg)
 
 # compile the smart contract
-# compile_drfp_sol()
+compile_drfp_sol()
