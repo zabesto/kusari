@@ -1,5 +1,5 @@
-var DRFP = artifacts.require("./drfp.sol");
+var Drfp = artifacts.require("./drfp.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(DRFP);
+  deployer.deploy(Drfp);
 };
