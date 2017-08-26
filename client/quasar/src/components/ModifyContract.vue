@@ -1,6 +1,5 @@
 <template>
   <div class="">
-  Jokes on you!
   </div>
 </template>
 
