@@ -52,15 +52,6 @@
               <q-btn @click="$refs.stepper.next()">Next</q-btn>
             </q-stepper-navigation>
           </q-step>
-          <q-step>
-            <q-input type="file" />
-            <q-uploader hide-upload-button :url="url"></q-uploader>
-            <q-stepper-navigation>
-              <q-btn flat @click="$refs.stepper.previous()">Back</q-btn>
-              <q-btn @click="$refs.stepper.next()">Next</q-btn>
-            </q-stepper-navigation>
-          </q-step>
-
         </q-stepper>
     </div>
   </div>
