@@ -7,7 +7,6 @@
 
 ```sh
 pip install flask
-pip install -U flask-cors --upgrade --ignore-installed six
 pip install ipfsapi
 pip install py-solc
 pip install web3[tester]
