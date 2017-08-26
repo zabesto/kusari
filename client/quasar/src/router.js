@@ -32,6 +32,22 @@ export default new VueRouter({
         {
           path: 'createcontract',
           component: load('CreateContract')
+        },
+        {
+          path: 'modifycontract',
+          component: load('ModifyContract')
+        },
+        {
+          path: 'viewcontract',
+          component: load('ViewContract')
+        },
+        {
+          path: 'revealbid',
+          component: load('RevealBid')
+        },
+        {
+          path: 'submitproposal',
+          component: load('SubmitProposal')
         }
       ]},
     // Always leave this last one
