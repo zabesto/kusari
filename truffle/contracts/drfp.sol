@@ -7,8 +7,8 @@ contract drfp {
         bool isValid;
         string name;
         string publicKey;
-        string privateKey;
         string bidLocation;
+        string privateKey;
     }
 
     struct BidManager {
@@ -16,8 +16,8 @@ contract drfp {
     }
 
     struct BidPackage {
+        string name;
         string specLocation;
-        string templateLocation;
     }
 
     struct PeriodStarts {
@@ -30,7 +30,6 @@ contract drfp {
     mapping (address => Bidder) bidders;
 
     enum RFPPeriods { Advertising, Bidding, Reveal, Award }
-    RFPPeriods currentPeriod;
     RFPPeriods constant defaultChoice = RFPPeriods.Advertising;
     BidManager bidManager;
     BidPackage bidPackage;
@@ -44,7 +43,7 @@ contract drfp {
     }
 
     modifier onlyBidders() {
-        require(!bidders[msg.sender].isValid);
+        require(bidders[msg.sender].isValid);
         _;
     }
 
@@ -53,28 +52,43 @@ contract drfp {
         _;
     }
 
-    // HACK FOR NOW
-    function drfp(string bidManagerName, string specLocation, string templateLocation,
+    modifier onlyBefore(uint _time) {
+        require(now < _time);
+        _;
+    }
+
+    function drfp(string bidManagerName, string rfpName, string specLocation,
                     uint advertisingStart, uint biddingStart, uint revealStart, uint awardDate)
     {
         currentPeriod = RFPPeriods.Advertising;
         bidManager.name = bidManagerName;
         bidPackage.specLocation = specLocation;
-        bidPackage.templateLocation = templateLocation;
         periodStarts.advertisingStart = advertisingStart;
         periodStarts.biddingStart = biddingStart;
         periodStarts.revealStart = revealStart;
         periodStarts.awardDate = awardDate;
     }
 
-    function getCurrentPeriod() returns (RFPPeriods) {
-        return currentPeriod;
+    // private key is set later
+    function addBidder(address _address, string _name, string _publicKey)
+        onlyOwner()
+        onlyBefore(periodStarts.biddingStart) {
+        bidders[_address] = Bidder(true, _name, _publicKey, "", "");
     }
 
-    function reveal() onlyOwner {
-        //if (block.timestamp < deadline) throw;      // TODO investigate block.timestamp
+    function addBidLocation(address _address, string _bidLocation)
+        onlyBidders(msg.sender) {
+        bidders[msg.sender].bidLocation = _bidLocation;
+    }
 
-        // do stuff
+    function addPrivateKey(address _address, string _privateKey)
+        onlyAfter(periodStarts.revealStart)
+        onlyBidders(msg.sender) {
+        bidders[msg.sender].privateKey = _privateKey;
+    }
+
+    function getCurrentPeriod() returns (RFPPeriods) {
+        return currentPeriod;
     }
 
     // dtor
