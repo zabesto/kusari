@@ -1,1 +1,1 @@
-# kusari
+# kusari FTW!
