@@ -16,6 +16,19 @@ import router from './router'
 Vue.config.productionTip = false
 Vue.use(Quasar) // Install Quasar Framework
 Vue.prototype.$http = axios
+Vue.prototype.$file = function getBase64 (file) {
+  var reader = new FileReader()
+  var promise = new Promise((resolve, reject) => {
+    reader.readAsDataURL(file)
+    reader.onload = function () {
+      resolve(reader.result)
+    }
+    reader.onerror = function (error) {
+      reject(error)
+    }
+  })
+  return promise
+}
 if (__THEME === 'mat') {
   require('quasar-extras/roboto-font')
 }

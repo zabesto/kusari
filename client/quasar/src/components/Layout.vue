@@ -13,8 +13,8 @@
       </q-btn>
 
       <q-toolbar-title>
-        Quasar App
-        <div slot="subtitle">Running on Quasar v{{$q.version}}</div>
+        dRFP
+        <div slot="subtitle">Decentralized Contract Proposals</div>
       </q-toolbar-title>
     </q-toolbar>
 
