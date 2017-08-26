@@ -34,7 +34,7 @@ export default {
     QUploader
   },
   mounted () {
-    this.$http.get('http://localhost:5000/').then(response => {
+    this.$http.get('/api').then(response => {
       this.contract.firstname = response.data.firstName
       console.log(response.data.firstName)
     }, response => {
