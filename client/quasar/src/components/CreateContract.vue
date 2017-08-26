@@ -38,7 +38,7 @@ export default {
   },
   data () {
     return {
-      url: "http://localhost:8080",
+      url: 'http://localhost:8080',
       addressError: [],
       contract: {
         name: null,
