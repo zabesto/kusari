@@ -24,7 +24,6 @@
         instead of <q-item> for
         internal vue-router navigation
       -->
-
       <q-list no-border link inset-delimiter>
         <q-list-header>Contract</q-list-header>
         <q-item to="/viewcontract">
