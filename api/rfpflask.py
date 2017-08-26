@@ -1,10 +1,14 @@
+import base64
 import ipfsapi                              # Peer to Peer distributed storage
 import json
+import time
 
 from flask import Flask, jsonify, request   # Python microframework
 from flask_cors import CORS                 # Cross Origin Resource Sharing
 from solc import compile_files              # Python wrapper for the Solidity compiler
 from web3 import Web3, TestRPCProvider      # Python implementation of Web3 to interact with the blockchain
+
+DEBUG = True
 
 # flask server
 app = Flask(__name__)
@@ -17,16 +21,19 @@ web3 = Web3(TestRPCProvider())
 
 ''' IPFS '''
 
+HOST_IPFS = '127.0.0.1'
+PORT_IPFS = 5001
+
 ROUTE_IPFS='/ipfs'
 
-@app.route(ROUTE_IPFS + '/upload')
-def upload():
-    FILE_NAME = ''
+ipfs = ipfsapi.connect(HOST_IPFS, PORT_IPFS)
 
-    api = ipfsapi.connect('127.0.0.1', 5001)
-    result = api.add(FILE_NAME)
+def upload(file):
+	BASE64_PREFIX = 'data:text/markdown;base64,'
+	base64_file = file.replace(BASE64_PREFIX)
+	result = ipfs.add(base64.b64decode(file))
 
-    return jsonify(result)
+	return jsonify(result)
 
 ''' Web3 '''
 
@@ -34,6 +41,7 @@ ROUTE_DRFP='/drfp'
 
 # DRFP params
 DRFP_ACCOUNT='account'
+DRFP_OWNER='owner'
 DRFP_NAME='name'
 DRFP_WHITELIST='whitelist'
 DRFP_ENDPERIODS='endPeriods'
@@ -58,6 +66,7 @@ def get_params():
 
 	params = {}
 	params[DRFP_ACCOUNT] = 'String'
+	params[DRFP_OWNER] = 'String'
 	params[DRFP_NAME] = 'String'
 	params[DRFP_WHITELIST] = '[String]'
 	params[DRFP_ENDPERIODS] = end_periods
@@ -94,54 +103,92 @@ def create_bidder(id):
 
 	return web3.eth.accounts[id]
 
+'''
+	Returns the request data.
 
-# TODO dummy endpoint
-@app.route(ROUTE_DRFP + '/create', methods=['POST'])
-def create_drfp():
+	- returns the request data
+'''
+@app.route(ROUTE_DRFP + '/create/dummy', methods=['POST'])
+def create_drfp_dummy():
 	return jsonify(request.data)
 
 '''
+	Create a new DRFP.a
+
+
+	- returns the results
+
+'''
+'''
 @app.route(ROUTE_DRFP + '/create', methods=['POST'])
 def create_drfp():
-
-    # the smart contract
-    CONTRACT_NAME = 'drfp'
-    FILE_NAME = CONTRACT_NAME + '.sol'
-
-    DEPLOY_COST = 4000000
-
-    # compile the sol file
-    COMPILED = compile_files([FILE_NAME])
-    RFP = COMPILED[FILE_NAME + ':' + CONTRACT_NAME]
-    RFPContract = web3.eth.contract(
-        abi = RFP['abi'],
-        bytecode = RFP['bin'],
-        bytecode_runtime = RFP['bin-runtime']
-    )
-
-    # get ipfs hash for spec and template
+	DEPLOY_COST = 4000000
 
     # extract args from request
-    owner_addr = request.form[DRFP_ACCOUNT]
-    args = get_args(request.form)
+	printd('extracting args...')
+	owner_addr = request.form[DRFP_ACCOUNT]
+	args = get_args(request.data)
 
     # deploy the contract to the blockchain
-    trans_hash = CONTRACT.deploy(
-        args=args, #['hello bobby boy']
+	trans_hash = DRFPContract.deploy(
+        args=args,
         transaction={'from':owner_addr, 'gas':DEPLOY_COST}
     )
 
     # fetch the instance of the contract
-    trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
-    contract_addr = trans_receipt['contractAddress']
-    rfc_contract = RFPContract(contract_addr)
+	trans_receipt = web3.eth.getTransactionReceipt(trans_hash)
+	contract_addr = trans_receipt['contractAddress']
+	rfc_contract = DRFPContract(contract_addr)
 
-    RESULT = rfc_contract.call(
+	RESULT = rfc_contract.call(
         {'from': web3.eth.coinbase}
     )
 
-    return jsonify(RESULT)
+	return jsonify(RESULT)
 '''
+
+@app.route(ROUTE_DRFP + '/contract/dummy')
+def get_contract_dummy():
+	data = {}
+	data['name'] = 'Contruct12'
+	data['manager'] = 'rishabh'
+	data['managerAddress'] = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNA3DQEBAQUAA4GNqGKukO1De7zhZj6+H0q'
+	data['specLink'] = 'https://www.google.com/'
+
+	periods = {}
+	periods['bidding'] = int(round(time.time() * 1000))
+	periods['reveal'] = int(round(time.time() * 1000))
+	periods['award'] = int(round(time.time() * 1000))
+	data['periods'] = periods
+
+	whitelist = []
+	whitelist.append("MIGfMA0GCSqGSIb")
+	whitelist.append("3DQEBAQUAA4GN")
+	whitelist.append("3DQEBAQUAA4GN")
+	whitelist.append("ukO1De7zhZj6+")
+
+	data['whitelist'] = whitelist
+
+	return jsonify(data)
+
+@app.route(ROUTE_DRFP + '/contract/<contract_addr>')
+def get_contract(contract_addr):
+	DRFPContract(contract_addr)
+
+def compile_drfp_sol():
+	CONTRACT_NAME = 'drfp'
+	FILE_NAME = CONTRACT_NAME + '.sol'
+	PATH = '/truffle/contracts/' + FILE_NAME
+
+	printd('compiling %s...' % (FILE_NAME))
+	COMPILED = compile_files([FILE_NAME])
+	RFP = COMPILED[FILE_NAME + ':' + CONTRACT_NAME]
+	global DRFPContract
+	DRFPContract = web3.eth.contract(
+        abi = RFP['abi'],
+        bytecode = RFP['bin'],
+        bytecode_runtime = RFP['bin-runtime']
+    )
 
 '''
 	Construct the args from the given params for the contract.
@@ -151,15 +198,20 @@ def create_drfp():
 	- returns the args as a [String]
 '''
 def get_args(params):
-	# whitelist = params[DRFP_WHITELIST] # ??
-	return [
-		params[DRFP_NAME],
-		params[DRFP_ENDPERIODS],
-		params[DRFP_ADVERTISING],
-		params[DRFP_BIDDING],
-		params[DRFP_REVEAL],
-		params[DRFP_AWARD]
-	]
+	# get ipfs hash for spec and template
+	file_hash = upload(params[DRFP_FILE])
+
+	# construct args
+	args = []
+	args.append(params[DRFP_OWNER])
+	args.append(params[DRFP_NAME])
+	args.append(file_hash)
+	args.append(params[DRFP_ADVERTISING])
+	args.append(params[DRFP_BIDDING])
+	args.append(params[DRFP_REVEAL])
+	args.append(params[DRFP_AWARD])
+
+	return args
 
 '''
 	Get the IPFS hash from the given file.
@@ -171,43 +223,15 @@ def get_args(params):
 def get_ipfs_hash(file):
 	return upload()['hash']
 
-def crossdomain(origin=None, methods=None, headers=None,
-                max_age=21600, attach_to_all=True,
-                automatic_options=True):
-    if methods is not None:
-        methods = ', '.join(sorted(x.upper() for x in methods))
-    if headers is not None and not isinstance(headers, basestring):
-        headers = ', '.join(x.upper() for x in headers)
-    if not isinstance(origin, basestring):
-        origin = ', '.join(origin)
-    if isinstance(max_age, timedelta):
-        max_age = max_age.total_seconds()
+'''
+	Debug print.
 
-    def get_methods():
-        if methods is not None:
-            return methods
+	- msg: The message to print
+'''
+def printd(msg):
+	if DEBUG == False:
+		return
+	print '##########   %s   ##########' % (msg)
 
-        options_resp = current_app.make_default_options_response()
-        return options_resp.headers['allow']
-
-    def decorator(f):
-        def wrapped_function(*args, **kwargs):
-            if automatic_options and request.method == 'OPTIONS':
-                resp = current_app.make_default_options_response()
-            else:
-                resp = make_response(f(*args, **kwargs))
-            if not attach_to_all and request.method != 'OPTIONS':
-                return resp
-
-            h = resp.headers
-
-            h['Access-Control-Allow-Origin'] = origin
-            h['Access-Control-Allow-Methods'] = get_methods()
-            h['Access-Control-Max-Age'] = str(max_age)
-            if headers is not None:
-                h['Access-Control-Allow-Headers'] = headers
-            return resp
-
-        f.provide_automatic_options = False
-        return update_wrapper(wrapped_function, f)
-    return decorator
+# compile the smart contract
+# compile_drfp_sol()
