@@ -60,8 +60,8 @@ contract drfp {
     function drfp(string bidManagerName, string rfpName, string specLocation,
                     uint advertisingStart, uint biddingStart, uint revealStart, uint awardDate)
     {
-        currentPeriod = RFPPeriods.Advertising;
         bidManager.name = bidManagerName;
+        bidPackage.name = rfpName;
         bidPackage.specLocation = specLocation;
         periodStarts.advertisingStart = advertisingStart;
         periodStarts.biddingStart = biddingStart;
@@ -76,19 +76,15 @@ contract drfp {
         bidders[_address] = Bidder(true, _name, _publicKey, "", "");
     }
 
-    function addBidLocation(address _address, string _bidLocation)
-        onlyBidders(msg.sender) {
+    function addBidLocation(string _bidLocation)
+        onlyBidders() {
         bidders[msg.sender].bidLocation = _bidLocation;
     }
 
-    function addPrivateKey(address _address, string _privateKey)
+    function addPrivateKey(string _privateKey)
         onlyAfter(periodStarts.revealStart)
-        onlyBidders(msg.sender) {
+        onlyBidders() {
         bidders[msg.sender].privateKey = _privateKey;
-    }
-
-    function getCurrentPeriod() returns (RFPPeriods) {
-        return currentPeriod;
     }
 
     // dtor
