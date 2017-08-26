@@ -31,9 +31,9 @@ contract drfp {
 
     enum RFPPeriods { Advertising, Bidding, Reveal, Award }
     RFPPeriods constant defaultChoice = RFPPeriods.Advertising;
-    BidManager bidManager;
-    BidPackage bidPackage;
-    PeriodStarts periodStarts;
+    BidManager public bidManager;
+    BidPackage public bidPackage;
+    PeriodStarts public periodStarts;
 
     address public owner;
 

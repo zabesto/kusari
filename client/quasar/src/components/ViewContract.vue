@@ -1,22 +1,14 @@
 <template>
   <div class="">
-    <h2>View Contract</h2>
-    <q-field>
-      <q-input v-model="contract.firstname" stack-label="Contract Name" />
-    </q-field>
-    <q-field>
-      <q-chips-input v-model="contract.whitelist" float-label="Bidder Whitelist"/>
-    </q-field>
-    <h4>Period Ending Dates</h4>
-    <q-field>
-      <q-datetime v-model="contract.endPeriods.advertising" float-label="Advertising End Date"/>
-    </q-field>
-    <q-field>
-      <q-datetime v-model="contract.endPeriods.bidding" float-label="Bidding End Date"/>
-    </q-field>
-    <q-field>
-      <q-datetime v-model="contract.endPeriods.reveal" float-label="Reveal End Date"/>
-    </q-field>
+    <h5>View Contract</h5>
+    <span>Contract Name: {{ contract.name }}</span><br><br>
+    <span>Manager Address: {{ contract.managerAddress }}</span><br><br>
+    <span>Manager Name: {{ contract.manager }}</span><br><br>
+    <span>Spec Link: <a :href="contract.specLink">{{ contract.specLink }}</a></span><br><br>
+    <span>Whitelist: {{ contract.whitelist }}</span><br><br>
+    <span>Award Date: {{ contract.periods.award }}</span><br><br>
+    <span>Bidding Date: {{ contract.periods.bidding }}</span><br><br>
+    <span>Reveal Date: {{ contract.periods.reveal }}</span>
   </div>
 </template>
 
@@ -35,8 +27,14 @@ export default {
   },
   mounted () {
     this.$http.get('http://localhost:5000/').then(response => {
-      this.contract.firstname = response.data.firstName
-      console.log(response.data.firstName)
+      this.contract.name = response.data.name
+      this.contract.manager = response.data.manager
+      this.contract.managerAddress = response.data.managerAddress
+      this.contract.specLink = response.data.specLink
+      this.contract.whitelist = response.data.whitelist
+      this.contract.periods.award = response.data.periods.award
+      this.contract.periods.bidding = response.data.periods.bidding
+      this.contract.periods.reveal = response.data.periods.reveal
     }, response => {
       console.log(response)
     })
@@ -46,10 +44,13 @@ export default {
       url: 'http://localhost:8080',
       addressError: [],
       contract: {
-        firstname: null,
+        name: null,
+        manager: null,
+        managerAddress: null,
+        specLink: null,
         whitelist: [],
-        endPeriods: {
-          advertising: null,
+        periods: {
+          award: null,
           bidding: null,
           reveal: null
         }

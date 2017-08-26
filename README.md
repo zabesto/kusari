@@ -22,6 +22,8 @@ npm install -g truffle
 ```
 
 ### Run
+https://ipfs.io/docs/install/#installing-from-a-prebuilt-package
+sudo mv go-ipfs/ipfs /usr/local/bin/ipfs
 
 ```sh
 # start flask server

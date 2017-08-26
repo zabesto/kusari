@@ -13,6 +13,7 @@ import axios from 'axios'
 import Vue from 'vue'
 import Quasar from 'quasar'
 import router from './router'
+import eth from 'ethereum-address'
 Vue.config.productionTip = false
 Vue.use(Quasar) // Install Quasar Framework
 Vue.prototype.$http = axios
@@ -29,6 +30,7 @@ Vue.prototype.$file = function getBase64 (file) {
   })
   return promise
 }
+Vue.prototype.$isAddress = (address) => eth.isAddress(address)
 if (__THEME === 'mat') {
   require('quasar-extras/roboto-font')
 }
