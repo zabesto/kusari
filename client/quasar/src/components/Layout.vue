@@ -13,8 +13,8 @@
       </q-btn>
 
       <q-toolbar-title>
-        Quasar App
-        <div slot="subtitle">Running on Quasar v{{$q.version}}</div>
+        dRFP
+        <div slot="subtitle">Decentralized Contract Proposals</div>
       </q-toolbar-title>
     </q-toolbar>
 
@@ -24,7 +24,6 @@
         instead of <q-item> for
         internal vue-router navigation
       -->
-
       <q-list no-border link inset-delimiter>
         <q-list-header>Contract</q-list-header>
         <q-item to="/viewcontract">
