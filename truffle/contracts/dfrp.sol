@@ -37,12 +37,19 @@ contract dfrp {
 
     modifier onlyOwner() {
         require(msg.sender == owner);
-        _
+        _;
     }
 
     modifier onlyBidders() {
         require(bidderWhitelist[msg.sender])
+        _;
     }
+
+    modifier onlyAfter(uint _time) {
+        require(now >= _time);
+        _;
+    }
+
 
     // ctor
     function drfp(BidManager _manager, Bidder[] _bidders, BidPackage _package, PeriodStarts _periods) {
@@ -54,7 +61,7 @@ contract dfrp {
         return currentPeriod;
     }
 
-    function reveal() onlyRFPOwner {
+    function reveal() onlyOwner {
         if (block.timestamp < deadline) throw;      // TODO investigate block.timestamp
 
         // do stuff
