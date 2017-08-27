@@ -177,14 +177,19 @@ def find_contract():
 	request_body = request.get_json()
 	owner_addr = request_body[SC_OWNER_ADDR]
 	contract_addr = request_body[SC_CONTRACT_ADDR]
-
 	instance = DRFPContract(contract_addr)
 
-	owner = instance.call({'from':contract_addr})
-	printd(owner)
+	response = {}
+	response[SC_NAME] = instance.call({'from': owner_addr}).bidPackage()[0]
+	response[SC_OWNER] = instance.call({'from': owner_addr}).bidManager()
+	response[SC_OWNER_ADDR] = owner_addr
+	response[SC_LINK] = instance.call({'from': owner_addr}).bidPackage()[1]
+	response[SC_WHITELIST] = []
+	response[SC_AWARD] = instance.call({'from': owner_addr}).periodStarts()[3]
+	response[SC_REVEAL] = instance.call({'from': owner_addr}).periodStarts()[2]
+	response[SC_BIDDING] = instance.call({'from': owner_addr}).periodStarts()[1]
 
-	return owner
-
+	return jsonify(response)
 
 def compile_drfp_sol():
 	CONTRACT_NAME = 'drfp'
