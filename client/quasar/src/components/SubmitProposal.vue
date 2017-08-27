@@ -26,6 +26,7 @@
       <q-step title="Completed">
         <h4>Bid Proposal</h4>
         <p class="light-paragraph">You may view your proposal at the following location: {{ipfsAddress}}</p>
+        <p>{{privateKey}}</p>
       </q-step>
     </q-stepper>
   </div>
@@ -62,6 +63,7 @@ export default {
         whitelist: [],
         file: ''
       },
+      privateKey: '',
       canGoBack: window.history.length > 1
     }
   },
@@ -84,6 +86,7 @@ export default {
         console.log(load)
         this.$http.post('/api/drfp/proposal', load)
           .then(res => {
+            this.privateKey = res.data[1]
             Toast.create['positive']({
               html: 'Success! Your proposal has been submitted.'
             })
