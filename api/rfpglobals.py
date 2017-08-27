@@ -32,3 +32,7 @@ SC_BIDDER_ADDR = 'bidderAddr'
 SC_CONTRACT_ADDR = 'contractAddr'
 
 SC_FILE = DRFP_FILE
+
+''' key pair generator '''
+RSA_BITS = 1024
+RSA_FORMAT = 'PEM'

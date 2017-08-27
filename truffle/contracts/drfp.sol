@@ -27,7 +27,7 @@ contract drfp {
         uint awardDate;
     }
 
-    mapping (address => Bidder) bidders;
+    mapping (address => Bidder) public bidders;
 
     enum RFPPeriods { Advertising, Bidding, Reveal, Award }
     RFPPeriods constant defaultChoice = RFPPeriods.Advertising;

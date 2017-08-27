@@ -3,8 +3,9 @@ import ipfsapi                              # Peer to Peer distributed storage
 import json
 import time
 
+from Crypto.PublicKey import RSA            # Python key pair generator
 from flask import Flask, jsonify, request   # Python microframework
-from io import FileIO
+from io import FileIO                       # Create temp file to upload to IPFS
 from rfpglobals import *
 from solc import compile_files              # Python wrapper for the Solidity compiler
 from web3 import Web3, HTTPProvider         # Python implementation of Web3 to interact with the blockchain
@@ -48,6 +49,7 @@ def upload(file):
 
 	printd(result['Hash'])
 
+	# TODO: delete file
 	return result
 
 ''' Web3 '''
@@ -107,19 +109,19 @@ def create_drfp():
 	owner_addr = request_body[DRFP_ACCOUNT]
 	printd(owner_addr)
 
-    # extract args from request
+	# extract args from request
 	printd('convert to json...')
 	printd(jsonify(request_body))
 	args = get_args(request_body)
 
-    # deploy the contract to the blockchain
+	# deploy the contract to the blockchain
 	printd('deploying...')
 	trans_hash = DRFPContract.deploy(
         args=args,
         transaction={'from':owner_addr, 'gas':DEPLOY_COST}
     )
 
-    # fetch the instance of the contract
+	# fetch the instance of the contract
 	printd('fetching transaction for smart contract instance...')
 	trans_receipt = testrpc.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
@@ -150,10 +152,14 @@ def find_contract():
 	response[SC_OWNER] = instance.call({'from': owner_addr}).bidManager()
 	response[SC_OWNER_ADDR] = owner_addr
 	response[SC_LINK] = instance.call({'from': owner_addr}).bidPackage()[1]
-	response[SC_WHITELIST] = []
 	response[SC_AWARD] = instance.call({'from': owner_addr}).periodStarts()[3]
 	response[SC_REVEAL] = instance.call({'from': owner_addr}).periodStarts()[2]
 	response[SC_BIDDING] = instance.call({'from': owner_addr}).periodStarts()[1]
+
+	#bidders = instance.call({'from': owner_addr}).bidders()
+	#response['bidders'] = bidders
+	whitelist = []
+	response[SC_WHITELIST] = whitelist
 
 	return jsonify(response)
 
@@ -170,8 +176,8 @@ def bid_proposal():
 	upload_results = upload(request_body[SC_FILE])
 	file_hash = upload_results['Hash']
 
-	# store the hash
-	return add_to_rfp_store(contract_addr, bidder_addr, file_hash)
+	keys = generate_keypair()
+	return jsonify(keys)
 
 '''
 	Reveal the private key for the IPFS file that was submitted by the bidder.
@@ -253,6 +259,21 @@ def get_args(params):
 '''
 def get_ipfs_hash(file):
 	return upload()['hash']
+
+'''
+	Generate keypair.
+
+	- returns an array containing a public and private key
+'''
+def generate_keypair():
+	key = RSA.generate(RSA_BITS)
+	private_key = key.exportKey(RSA_FORMAT)
+	public_key = key.publickey().exportKey(RSA_FORMAT)
+
+	printd('public_key: %s' % (public_key))
+	printd('private_key: %s' % (private_key))
+
+	return [public_key, private_key]
 
 '''
 	Debug print.
