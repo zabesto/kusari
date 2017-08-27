@@ -13,10 +13,15 @@
     "axios": "^0.16.2",
     "babel-runtime": "^6.25.0",
     "ethereum-address": "0.0.4",
+    "node-sass": "^4.5.3",
     "quasar-extras": "0.x",
     "quasar-framework": "^0.14.1",
+    "sass-loader": "^6.0.6",
+    "sweet-modal-vue": "^1.2.0",
     "vue": "~2.3.4",
+    "vue-js-modal": "^1.2.9",
     "vue-router": "^2.7.0",
+    "vue-toast": "^3.1.0",
     "vuex": "^2.3.1"
   },
   "devDependencies": {
