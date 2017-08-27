@@ -28,6 +28,7 @@ contract drfp {
     }
 
     mapping (address => Bidder) public bidders;
+    address[] public bidderWhitelist;
 
     enum RFPPeriods { Advertising, Bidding, Reveal, Award }
     RFPPeriods constant defaultChoice = RFPPeriods.Advertising;
@@ -70,11 +71,15 @@ contract drfp {
         periodStarts.awardDate = awardDate;
     }
 
+    function getWhitelist() returns (address[]){
+        return bidderWhitelist;
+    }
+
     function addBidder(address _address)
         onlyOwner()
-        //onlyBefore(periodStarts.biddingStart)
-    {
+        onlyBefore(periodStarts.biddingStart) {
         bidders[_address] = Bidder(true, "", "", "", "");
+        bidderWhitelist.push(_address);
     }
 
     function addBidderName(string _name)
