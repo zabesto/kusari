@@ -107,19 +107,19 @@ def create_drfp():
 	owner_addr = request_body[DRFP_ACCOUNT]
 	printd(owner_addr)
 
-    # extract args from request
+	# extract args from request
 	printd('convert to json...')
 	printd(jsonify(request_body))
 	args = get_args(request_body)
 
-    # deploy the contract to the blockchain
+	# deploy the contract to the blockchain
 	printd('deploying...')
 	trans_hash = DRFPContract.deploy(
         args=args,
         transaction={'from':owner_addr, 'gas':DEPLOY_COST}
     )
 
-    # fetch the instance of the contract
+	# fetch the instance of the contract
 	printd('fetching transaction for smart contract instance...')
 	trans_receipt = testrpc.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
@@ -150,10 +150,14 @@ def find_contract():
 	response[SC_OWNER] = instance.call({'from': owner_addr}).bidManager()
 	response[SC_OWNER_ADDR] = owner_addr
 	response[SC_LINK] = instance.call({'from': owner_addr}).bidPackage()[1]
-	response[SC_WHITELIST] = []
 	response[SC_AWARD] = instance.call({'from': owner_addr}).periodStarts()[3]
 	response[SC_REVEAL] = instance.call({'from': owner_addr}).periodStarts()[2]
 	response[SC_BIDDING] = instance.call({'from': owner_addr}).periodStarts()[1]
+
+	#bidders = instance.call({'from': owner_addr}).bidders()
+	#response['bidders'] = bidders
+	whitelist = []
+	response[SC_WHITELIST] = whitelist
 
 	return jsonify(response)
 
