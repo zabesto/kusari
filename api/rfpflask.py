@@ -163,6 +163,10 @@ def create_drfp():
 	global rfc_instance
 	rfc_instance = DRFPContract(contract_addr)
 
+	# generate whitelist
+	for addr in request_body[DRFP_WHITELIST]:
+		rfc_instance.instance.call({'from': owner_addr}).addBidder(addr)
+
 	return jsonify(contract_addr)
 
 # smart contract params
