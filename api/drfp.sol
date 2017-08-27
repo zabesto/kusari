@@ -69,14 +69,20 @@ contract drfp {
         periodStarts.awardDate = awardDate;
     }
 
-    // private key is set later
-    function addBidder(address _address, string _name, string _publicKey)
+    function addBidder(address _address, string _name)
         onlyOwner()
         onlyBefore(periodStarts.biddingStart) {
-        bidders[_address] = Bidder(true, _name, _publicKey, "", "");
+        bidders[_address] = Bidder(true, _name, "", "", "");
+    }
+
+    function addPublicKey(string _publicKey)
+        onlyAfter(periodStarts.biddingStart)
+        onlyBidders() {
+        bidders[msg.sender].publicKey = _publicKey;
     }
 
     function addBidLocation(string _bidLocation)
+        onlyAfter(periodStarts.biddingStart)
         onlyBidders() {
         bidders[msg.sender].bidLocation = _bidLocation;
     }
