@@ -179,8 +179,8 @@ def bid_proposal():
 	keys = generate_keypair()
 
 	rfc_instance = DRFPContract(contract_addr)
-	rfc_instance.transact({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
-	rfc_instance.transact({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
+	rfc_instance.transact({'from': bidder_addr, 'gas':1000000}).addPublicKey(keys[0])
+	rfc_instance.transact({'from': bidder_addr, 'gas':1000000}).addBidLocation(file_hash)
 
 	return jsonify(keys)
 
@@ -197,7 +197,7 @@ def reveal_ipfs_key():
 	private_key = request_body[SC_PRIVATE_KEY]
 
 	rfc_instance = DRFPContract(contract_addr)
-	rfc_instance.transact({'from': bidder_addr, 'gas':100000}).addPrivateKey(private_key)
+	rfc_instance.transact({'from': bidder_addr, 'gas':1000000}).addPrivateKey(private_key)
 
 	return 'success'
 
