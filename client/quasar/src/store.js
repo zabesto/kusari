@@ -4,12 +4,16 @@ import Vuex from 'vuex'
 Vue.use(Vuex)
 const store = new Vuex.Store({
   state: {
-    address: '',
+    account: '',
+    contract: '',
     type: ''
   },
   mutations: {
-    setAddress (state, address) {
-      state.address = address
+    setContract (state, address) {
+      state.contract = address
+    },
+    setAccount (state, address) {
+      state.account = address
     },
     setType (state, type) {
       state.type = type

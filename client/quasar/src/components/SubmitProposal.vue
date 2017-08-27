@@ -5,7 +5,11 @@
         <h6>Contract Address</h6>
         <p class='light-paragraph'>Enter the contract address, and submit your bid!</p>
         <q-field>
-          <q-input v-model='address' stack-label='Contract Address' v-on:keyup.enter='searchContract' :error='valid' />
+          <q-input v-model='contractAddress' stack-label='Contract Address' v-on:keyup.enter='searchContract' :error='valid' />
+          <br />
+        </q-field>
+        <q-field>
+          <q-input v-model='managerAddress' stack-label='User Address' v-on:keyup.enter='searchContract' :error='valid' />
           <br />
         </q-field>
         <q-btn :disabled='valid' @click='searchContract'>Search</q-btn>
@@ -43,16 +47,17 @@ export default {
   },
   data () {
     return {
-      address: '',
+      contractAddress: this.$store.state.contract,
+      managerAddress: this.$store.state.account,
       ipfsAddress: '',
       contract: {
         managerAdress: null,
         manager: null,
         name: null,
         periods: {
-          award: null,
-          bidding: null,
-          reveal: null
+          award: '08-26-2017',
+          bidding: '08-27-2017',
+          reveal: '08-28-2017'
         },
         specLink: null,
         whitelist: [],
@@ -72,12 +77,13 @@ export default {
       console.log(this.$refs.upload.files[0])
       this.$file(this.$refs.upload.files[0]).then((file) => {
         this.file = file
-        console.log(JSON.stringify(this.contract))
-        this.$http.post('/api/drfp/proposal/', {
+        var load = {
           file: this.file,
-          contractAddr: this.address,
+          contractAddr: this.contractAddress,
           bidderAddr: this.$store.state.adress
-        })
+        }
+        console.log(load)
+        this.$http.post('/api/drfp/proposal', load)
           .then(res => {
             Toast.create['positive']({
               html: 'Success! Your proposal has been submitted.'
@@ -90,29 +96,17 @@ export default {
       })
     },
     searchContract () {
-      this.$http.get('/api/drfp/contract/' + this.address)
+      this.$http.post('/api/drfp/search', {
+        ownerAddr: this.managerAddress,
+        contractAddr: this.contractAddress
+      })
         .then(res => {
+          console.log(res)
           this.contract = res.data
           this.$refs.stepper.next()
         })
         .catch(e => {
-          return {
-            'manager': 'rishabh',
-            'managerAddress': 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNA3DQEBAQUAA4GNqGKukO1De7zhZj6+H0q',
-            'name': 'Contruct12',
-            'periods': {
-              'award': 1503772718327,
-              'bidding': 1503772718327,
-              'reveal': 1503772718327
-            },
-            'specLink': 'https://www.google.com/',
-            'whitelist': [
-              'MIGfMA0GCSqGSIb',
-              '3DQEBAQUAA4GN',
-              '3DQEBAQUAA4GN',
-              'ukO1De7zhZj6+'
-            ]
-          }
+          console.log(e)
         })
     },
     goBack () {
