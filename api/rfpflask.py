@@ -169,35 +169,18 @@ SC_REVEAL = DRFP_REVEAL
 SC_AWARD = DRFP_AWARD
 SC_WHITELIST = DRFP_WHITELIST
 
-@app.route(ROUTE_DRFP + '/contract/dummy')
-def get_contract_dummy():
-	data = {}
-	data[SC_NAME] = 'Contruct12'
-	data[SC_OWNER] = 'rishabh'
-	data[SC_ADDR] = 'MIGfMA0GCSqGSIb3DQEBAQUAA4GNA3DQEBAQUAA4GNqGKukO1De7zhZj6+H0q'
-	data[SC_LINK] = 'https://www.google.com/'
+SC_OWNER_ADDR = 'ownerAddr'
+SC_CONTRACT_ADDR = 'contractAddr'
 
-	periods = {}
-	periods[SC_BIDDING] = int(round(time.time() * 1000))
-	periods[SC_REVEAL] = int(round(time.time() * 1000))
-	periods[SC_AWARD] = int(round(time.time() * 1000))
-	data[SC_PERIODS] = periods
+@app.route(ROUTE_DRFP + '/search', methods=['POST'])
+def find_contract():
+	request_body = request.get_json()
+	owner_addr = request_body[SC_OWNER_ADDR]
+	contract_addr = request_body[SC_CONTRACT_ADDR]
 
-	whitelist = []
-	whitelist.append("MIGfMA0GCSqGSIb")
-	whitelist.append("3DQEBAQUAA4GN")
-	whitelist.append("3DQEBAQUAA4GN")
-	whitelist.append("ukO1De7zhZj6+")
+	instance = DRFPContract(contract_addr)
 
-	data[SC_WHITELIST] = whitelist
-
-	return jsonify(data)
-
-@app.route(ROUTE_DRFP + '/contract')
-def get_contract():
-	instance = DRFPContract('0xc305c901078781c232a2a521c2af7980f8385ee9')
-
-	owner = instance.call({'from':'0x82a978b3f5962a5b0957d9ee9eef472ee55b42f1'}).bidManager()
+	owner = instance.call({'from':contract_addr})
 	printd(owner)
 
 	return owner
