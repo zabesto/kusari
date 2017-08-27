@@ -54,6 +54,16 @@ contract('drfp', function(accounts) {
         });
     });
 
+    it("should be able to get the whitelist", () => {
+
+        return DRFP.deployed().then(instance => {
+            return instance.getWhitelist.call().then(result => {
+                console.log(result);
+                // TODO
+            });
+        });
+    });
+
 
 
             // assert.equal(txResult.logs.length, 1); // make sure it fired
