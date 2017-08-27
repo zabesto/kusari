@@ -76,32 +76,32 @@ contract drfp {
     }
 
     function addBidder(address _address)
-        onlyOwner()
-        onlyBefore(periodStarts.biddingStart) {
+        onlyOwner() {
+        //onlyBefore(periodStarts.biddingStart) {
         bidders[_address] = Bidder(true, "", "", "", "");
         bidderWhitelist.push(_address);
     }
 
     function addBidderName(string _name)
-        onlyAfter(periodStarts.advertisingStart)
+        //onlyAfter(periodStarts.advertisingStart)
         onlyBidders() {
         bidders[msg.sender].name = _name;
     }
 
     function addPublicKey(string _publicKey)
-        onlyAfter(periodStarts.biddingStart)
+        //onlyAfter(periodStarts.biddingStart)
         onlyBidders() {
         bidders[msg.sender].publicKey = _publicKey;
     }
 
     function addBidLocation(string _bidLocation)
-        onlyAfter(periodStarts.biddingStart)
+        //onlyAfter(periodStarts.biddingStart)
         onlyBidders() {
         bidders[msg.sender].bidLocation = _bidLocation;
     }
 
     function addPrivateKey(string _privateKey)
-        onlyAfter(periodStarts.revealStart)
+        //onlyAfter(periodStarts.revealStart)
         onlyBidders() {
         bidders[msg.sender].privateKey = _privateKey;
     }

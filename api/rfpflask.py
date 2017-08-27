@@ -129,7 +129,7 @@ def create_drfp():
 
 	# generate whitelist
 	for addr in request_body[DRFP_WHITELIST]:
-		rfc_instance.call({'from': owner_addr, 'gas':100000}).addBidder(addr)
+		rfc_instance.call({'from': owner_addr, 'gas':1000000}).addBidder(addr)
 
 	return jsonify(contract_addr)
 
@@ -158,7 +158,7 @@ def find_contract():
 	#bidders = instance.call({'from': owner_addr}).bidders()
 	#response['bidders'] = bidders
 	whitelist = []
-	response[SC_WHITELIST] = whitelist
+	#response[SC_WHITELIST] = instance.call({'from': owner_addr}).getWhitelist()
 
 	return jsonify(response)
 
