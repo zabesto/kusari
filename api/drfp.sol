@@ -69,10 +69,16 @@ contract drfp {
         periodStarts.awardDate = awardDate;
     }
 
-    function addBidder(address _address, string _name)
+    function addBidder(address _address)
         onlyOwner()
         onlyBefore(periodStarts.biddingStart) {
-        bidders[_address] = Bidder(true, _name, "", "", "");
+        bidders[_address] = Bidder(true, "", "", "", "");
+    }
+
+    function addBidderName(string _name)
+        onlyAfter(periodStarts.advertisingStart)
+        onlyBidders() {
+        bidders[msg.sender].name = _name;
     }
 
     function addPublicKey(string _publicKey)
