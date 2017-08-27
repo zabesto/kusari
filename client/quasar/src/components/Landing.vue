@@ -1,6 +1,7 @@
 <template>
   <div class="">
-  Jokes on you!
+    <h4>Kusari</h4>
+<p class="light-paragpraph">A decentralized protocol that ensures trust and openness in the RFP process, preventing collusion for multi-billion dollar bids.</p>
   </div>
 </template>
 
