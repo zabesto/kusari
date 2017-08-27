@@ -3,9 +3,11 @@ import ipfsapi                              # Peer to Peer distributed storage
 import json
 import time
 
+from Crypto.PublicKey import RSA            # Python key pair generator
 from flask import Flask, jsonify, request   # Python microframework
+from io import FileIO                       # Create temp file to upload to IPFS
+from rfpglobals import *
 from solc import compile_files              # Python wrapper for the Solidity compiler
-from io import FileIO
 from web3 import Web3, HTTPProvider         # Python implementation of Web3 to interact with the blockchain
 
 DEBUG = True
@@ -24,8 +26,6 @@ rfp_store = {}
 
 HOST_IPFS = '127.0.0.1'
 PORT_IPFS = 5001
-
-ROUTE_IPFS='/ipfs'
 
 ipfs = ipfsapi.connect(HOST_IPFS, PORT_IPFS)
 
@@ -49,45 +49,10 @@ def upload(file):
 
 	printd(result['Hash'])
 
+	# TODO: delete file
 	return result
 
 ''' Web3 '''
-
-ROUTE_DRFP='/drfp'
-
-# DRFP params
-DRFP_ACCOUNT = 'account'           # account address
-DRFP_OWNER = 'manager'             # name of the manager
-DRFP_NAME = 'name'                 # name of the contract
-DRFP_WHITELIST = 'whitelist'
-DRFP_PERIODS = 'periods'
-DRFP_ADVERTISING = 'advertising'   # nested in periods
-DRFP_BIDDING = 'bidding'           # nested in periods
-DRFP_REVEAL = 'reveal'             # nested in periods
-DRFP_AWARD = 'award'               # nested in periods
-DRFP_FILE = 'file'                 # base64 encrypted file
-
-'''
-	Return the DRFP parameters.
-
-	- returns the DRFP parameters as a json string
-'''
-@app.route(ROUTE_DRFP + '/params')
-def get_params():
-	periods = {}
-	periods[DRFP_BIDDING] = 'uint'
-	periods[DRFP_REVEAL] = 'uint'
-	periods[DRFP_AWARD] = 'uint'
-
-	params = {}
-	params[DRFP_ACCOUNT] = 'String'
-	params[DRFP_OWNER] = 'String'
-	params[DRFP_NAME] = 'String'
-	params[DRFP_WHITELIST] = '[String]'
-	params[DRFP_PERIODS] = periods
-	params[DRFP_FILE] = 'file'
-
-	return jsonify(params)
 
 '''
 	Fetch the existing owner.
@@ -144,47 +109,29 @@ def create_drfp():
 	owner_addr = request_body[DRFP_ACCOUNT]
 	printd(owner_addr)
 
-    # extract args from request
+	# extract args from request
 	printd('convert to json...')
 	printd(jsonify(request_body))
 	args = get_args(request_body)
 
-    # deploy the contract to the blockchain
+	# deploy the contract to the blockchain
 	printd('deploying...')
 	trans_hash = DRFPContract.deploy(
         args=args,
         transaction={'from':owner_addr, 'gas':DEPLOY_COST}
     )
 
-    # fetch the instance of the contract
+	# fetch the instance of the contract
 	printd('fetching transaction for smart contract instance...')
 	trans_receipt = testrpc.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
-	global rfc_instance
 	rfc_instance = DRFPContract(contract_addr)
 
 	# generate whitelist
 	for addr in request_body[DRFP_WHITELIST]:
-		rfc_instance.instance.call({'from': owner_addr}).addBidder(addr)
+		rfc_instance.call({'from': owner_addr, 'gas':100000}).addBidder(addr)
 
 	return jsonify(contract_addr)
-
-# smart contract params
-SC_NAME = DRFP_NAME
-SC_OWNER = DRFP_OWNER
-SC_ADDR = 'managerAddress'
-SC_LINK = 'specLink'
-SC_PERIODS = DRFP_PERIODS
-SC_BIDDING = DRFP_BIDDING
-SC_REVEAL = DRFP_REVEAL
-SC_AWARD = DRFP_AWARD
-SC_WHITELIST = DRFP_WHITELIST
-
-SC_OWNER_ADDR = 'ownerAddr'
-SC_BIDDER_ADDR = 'bidderAddr'
-SC_CONTRACT_ADDR = 'contractAddr'
-
-SC_FILE = DRFP_FILE
 
 '''
 	Fetch the contract.
@@ -204,10 +151,14 @@ def find_contract():
 	response[SC_OWNER] = instance.call({'from': owner_addr}).bidManager()
 	response[SC_OWNER_ADDR] = owner_addr
 	response[SC_LINK] = instance.call({'from': owner_addr}).bidPackage()[1]
-	response[SC_WHITELIST] = []
 	response[SC_AWARD] = instance.call({'from': owner_addr}).periodStarts()[3]
 	response[SC_REVEAL] = instance.call({'from': owner_addr}).periodStarts()[2]
 	response[SC_BIDDING] = instance.call({'from': owner_addr}).periodStarts()[1]
+
+	#bidders = instance.call({'from': owner_addr}).bidders()
+	#response['bidders'] = bidders
+	whitelist = []
+	response[SC_WHITELIST] = whitelist
 
 	return jsonify(response)
 
@@ -224,8 +175,13 @@ def bid_proposal():
 	upload_results = upload(request_body[SC_FILE])
 	file_hash = upload_results['Hash']
 
-	# store the hash
-	return add_to_rfp_store(contract_addr, bidder_addr, file_hash)
+	keys = generate_keypair()
+
+	rfc_instance = DRFPContract(contract_addr)
+	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
+	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
+
+	return jsonify(keys)
 
 '''
 	Reveal the private key for the IPFS file that was submitted by the bidder.
@@ -237,8 +193,12 @@ def reveal_ipfs_key():
 	request_body = request.get_json()
 	bidder_addr = request_body[SC_BIDDER_ADDR]
 	contract_addr = request_body[SC_CONTRACT_ADDR]
+	private_key = request_body[SC_PRIVATE_KEY]
 
-	return get_from_rfp_store(contract_addr, bidder_addr)
+	rfc_instance = DRFPContract(contract_addr)
+	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPrivateKey(private_key)
+
+	return 'success'
 
 def add_to_rfp_store(contract_addr, bidder_addr, file_hash):
 	bid_dict = {}
@@ -307,6 +267,21 @@ def get_args(params):
 '''
 def get_ipfs_hash(file):
 	return upload()['hash']
+
+'''
+	Generate keypair.
+
+	- returns an array containing a public and private key
+'''
+def generate_keypair():
+	key = RSA.generate(RSA_BITS)
+	private_key = key.exportKey(RSA_FORMAT)
+	public_key = key.publickey().exportKey(RSA_FORMAT)
+
+	printd('public_key: %s' % (public_key))
+	printd('private_key: %s' % (private_key))
+
+	return [public_key, private_key]
 
 '''
 	Debug print.

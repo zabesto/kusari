@@ -18,13 +18,13 @@
     <span>Contract Name: {{ contract.name }}</span><br><br>
     <span>Manager Address: {{ contract.managerAddress }}</span><br><br>
     <span>Manager Name: {{ contract.manager }}</span><br><br>
-    <span>Spec Link: <a :href="contract.specLink" target="_blank">{{ contract.specLink }}</a></span><br><br>
+    <span>Spec Link: <a :href="'http://ipfs.io/ipfs/' + contract.specLink" target="_blank">{{ contract.specLink }}</a></span><br><br>
   <q-btn>
-    <a :href="contract.specLink" target="_blank" download>Download</a>
+    <a :href="'http://ipfs.io/ipfs/' + contract.specLink" download>Download</a>
 </q-btn><br><br>
-    <span>Award Date: {{ contract.periods.award }}</span><br><br>
-    <span>Bidding Date: {{ contract.periods.bidding }}</span><br><br>
-    <span>Reveal Date: {{ contract.periods.reveal }}</span><br><br>
+    <span>Award Date: {{ contract.award }}</span><br><br>
+    <span>Bidding Date: {{ contract.bidding }}</span><br><br>
+    <span>Reveal Date: {{ contract.reveal }}</span><br><br>
   <!-- An basic example -->
    <q-card>
       <q-card-title align = "center">
@@ -92,41 +92,36 @@ export default {
     return {
       url: 'http://localhost:8080',
       addressError: [],
-      contractAddress: '',
-      managerAddress: '',
+      contractAddress: this.$store.state.contract,
+      managerAddress: this.$store.state.account,
       contract: {
         name: null,
         manager: null,
         managerAddress: null,
         specLink: null,
         whitelist: [],
-        bidder: [],
-        periods: {
-          award: null,
-          bidding: null,
-          reveal: null
-        }
+        award: null,
+        bidding: null,
+        reveal: null
       },
       canGoBack: window.history.length > 1
     }
   },
   methods: {
     searchContract () {
-      this.$http.post('http://localhost:5000/search/', {ownerAddr: this.contractAddress, contractAddr: this.managerAddress})
-        .then(response => {
-          this.contract.name = response.data.name
-          this.contract.manager = response.data.manager
-          this.contract.managerAddress = response.data.managerAddress
-          this.contract.specLink = response.data.specLink
-          this.contract.whitelist = response.data.whitelist
-          this.contract.periods.award = new Date(response.data.periods.award).toString()
-          this.contract.periods.bidding = new Date(response.data.periods.bidding).toString()
-          this.contract.periods.reveal = new Date(response.data.periods.reveal).toString()
+      this.$http.post('/api/drfp/search', {
+        ownerAddr: this.managerAddress,
+        contractAddr: this.contractAddress
+      })
+        .then(res => {
+          console.log(res)
+          this.contract = res.data
           this.$refs.stepper.next()
-          this.contract.bidder = response.data.bidder
+          this.contract.bidder = res.data.bidder
           console.log(this.contract.whitelist)
         })
         .catch(e => {
+          console.log(e)
         })
     },
     goBack () {

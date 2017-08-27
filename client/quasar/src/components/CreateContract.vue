@@ -32,6 +32,9 @@
       <h6>Period Ending Dates</h6>
       <p class="light-paragraph">These dates define the start of each period. The advertising period provides time for all parties to review the contract specification, and you will be able to modify your contract. The bidding period will lock the contract specification and allows the bidders to submit bids. The reveal period requires the bidders to submit their private keys and reveal their bid proposals. If a bidder fails to reveal their proposal before the award peiod, they will be removed as a qualified bidder.</p>
       <q-field>
+        <q-datetime v-model="contract.periods.advertising" float-label="Advertising Start Date"/>
+      </q-field>
+      <q-field>
         <q-datetime v-model="contract.periods.bidding" float-label="Bidding Start Date"/>
       </q-field>
       <q-field>
@@ -51,13 +54,15 @@
       <q-uploader ref="upload" hide-upload-button :url="url" :additionalFields="[{data: this.contract}]"></q-uploader>
       <q-stepper-navigation>
         <q-btn flat @click="$refs.stepper.previous()">Back</q-btn>
-        <q-btn @click='submit'>Submit</q-btn>
+        <q-btn :disabled="$store.state.account ==''" @click='submit'>Submit</q-btn>
       </q-stepper-navigation>
     </q-step>
     <q-step title="Completed">
       <h6>Contract Address</h6>
       <p class="light-paragraph">Below is your contract address. Bidders will use this address to submit their proposals. Make sure all of your bidders are aware of the address!</p>
-      <h4 style="align: center;">{{contractAddress}}</h4>
+      <div>
+        <h4 style="word-break: break-all; align: center;">{{$store.state.contract}}</h4>
+      </div>
     </q-step>
   </q-stepper>
   </div>
@@ -85,18 +90,19 @@ export default {
   },
   data () {
     return {
-      url: 'http://localhost:5000/',
+      url: 'na',
       addressError: [],
       account: null,
       contractAddress: null,
       contract: {
-        manager: null,
-        name: null,
-        whitelist: [],
+        manager: 'Kusari',
+        name: 'RFP 1 - Kusari Forge',
+        whitelist: ['0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe'],
         periods: {
-          bidding: null,
-          reveal: null,
-          award: null
+          advertising: new Date(),
+          bidding: new Date(),
+          reveal: '2017-09-03',
+          award: '2017-09-05'
         },
         file: null
       },
@@ -112,15 +118,17 @@ export default {
       this.$file(this.$refs.upload.files[0]).then((file) => {
         var contract = Object.assign({}, this.contract)
         contract.file = file
-        contract.account = this.account
+        contract.account = this.$store.state.account
         console.log(contract.periods.bidding)
+        contract.periods.advertising = Date.parse(contract.periods.advertising)
         contract.periods.bidding = Date.parse(contract.periods.bidding)
         contract.periods.reveal = Date.parse(contract.periods.reveal)
-        contract.periods.award = Date.parse(contract.periods.reveal)
+        contract.periods.award = Date.parse(contract.periods.award)
         console.log(JSON.stringify(contract))
         this.$http.post('/api/drfp/create', contract)
           .then(res => {
             this.$refs.stepper.next()
+            this.$store.commit('setContract', res.data)
             Toast.create['positive']('Success! Please record your contract address')
             console.log(res)
           })
