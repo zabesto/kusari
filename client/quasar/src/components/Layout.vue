@@ -16,10 +16,13 @@
         dRFP
         <div slot="subtitle">Decentralized Contract Proposals</div>
       </q-toolbar-title>
-      <q-btn :disabled="account=='owner'" @click='owner' flat>
+      <q-tooblar-title>Account: {{$store.state.account}}
+        <div slot="subtitle">Contract: {{$store.state.contract}}</div>
+      </q-tooblar-title>
+      <q-btn :disabled="$store.state.type=='owner'" @click='owner' flat>
         Owner
       </q-btn>
-      <q-btn :disable="account=='bidder'" @click='bidder' flat>
+      <q-btn :disable="$store.state.type=='bidder'" @click='bidder' flat>
         Bidder
       </q-btn>
     </q-toolbar>
@@ -40,10 +43,6 @@
         <q-item to="/createcontract">
           <q-item-side icon="add_box" />
           <q-item-main label="Create Contract" />
-        </q-item>
-        <q-item to="/modifycontract">
-          <q-item-side icon="mode_edit" />
-          <q-item-main label="Modify Contract" />
         </q-item>
         <q-list-header>Contract Bidder</q-list-header>
         <q-item to="/submitproposal">
@@ -72,6 +71,7 @@
 
 <script>
 import {
+  QInput,
   QLayout,
   QToolbar,
   QToolbarTitle,
@@ -87,6 +87,7 @@ import {
 export default {
   name: 'index',
   components: {
+    QInput,
     QLayout,
     QToolbar,
     QToolbarTitle,
@@ -100,8 +101,6 @@ export default {
   },
   data () {
     return {
-      account: 'owner',
-      key: ''
     }
   },
   computed: {
@@ -110,14 +109,14 @@ export default {
     owner () {
       this.$http.get('/api/drfp/account/owner')
         .then(res => {
-          this.$store.commit('setAddress', this.key)
+          this.$store.commit('setAccount', res.data)
           this.$store.commit('setType', 'owner')
         })
     },
     bidder () {
       this.$http.get('/api/drfp/account/bidder/1')
         .then(res => {
-          this.$store.commit('setAddress', this.key)
+          this.$store.commit('setAccount', res.data)
           this.$store.commit('setType', 'bidder')
         })
     }

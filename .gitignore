@@ -64,3 +64,4 @@ typings/
 
 # Python compiled files
 *.pyc
+api/temp_file.txt
