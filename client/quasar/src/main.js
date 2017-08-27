@@ -15,6 +15,8 @@ import Quasar from 'quasar'
 import router from './router'
 import store from './store'
 import eth from 'ethereum-address'
+import VModal from 'vue-js-modal'
+Vue.use(VModal)
 Vue.config.productionTip = false
 Vue.use(Quasar) // Install Quasar Framework
 Vue.prototype.$http = axios
