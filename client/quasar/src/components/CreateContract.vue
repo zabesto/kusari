@@ -54,15 +54,21 @@
         <q-btn @click='submit'>Submit</q-btn>
       </q-stepper-navigation>
     </q-step>
+    <q-step title="Completed">
+      <h6>Contract Address</h6>
+      <p class="light-paragraph">Below is your contract address. Bidders will use this address to submit their proposals. Make sure all of your bidders are aware of the address!</p>
+      <h4 style="align: center;">{{contractAddress}}</h4>
+    </q-step>
   </q-stepper>
   </div>
 </template>
 
 <script>
-import {QBtn, QIcon, QInput, QField, QChipsInput, QDatetime, QUploader, QStepper, QStepperNavigation, QStep} from 'quasar'
+import {QBtn, QIcon, QInput, QField, QChipsInput, QDatetime, QUploader, QStepper, QStepperNavigation, QStep, Toast} from 'quasar'
 
 export default {
   components: {
+    Toast,
     QBtn,
     QIcon,
     QInput,
@@ -75,11 +81,14 @@ export default {
     QStepperNavigation
   },
   mounted () {
+    this.account = window.localStorage.getItem('account')
   },
   data () {
     return {
       url: 'http://localhost:5000/',
       addressError: [],
+      account: null,
+      contractAddress: null,
       contract: {
         manager: null,
         name: null,
@@ -101,10 +110,18 @@ export default {
     submit () {
       console.log(this.$refs.upload.files[0])
       this.$file(this.$refs.upload.files[0]).then((file) => {
-        this.contract.file = file
-        console.log(JSON.stringify(this.contract))
-        this.$http.post('/api/drfp/create', this.contract)
+        var contract = Object.assign({}, this.contract)
+        contract.file = file
+        contract.account = this.account
+        console.log(contract.periods.bidding)
+        contract.periods.bidding = Date.parse(contract.periods.bidding)
+        contract.periods.reveal = Date.parse(contract.periods.reveal)
+        contract.periods.award = Date.parse(contract.periods.reveal)
+        console.log(JSON.stringify(contract))
+        this.$http.post('/api/drfp/create', contract)
           .then(res => {
+            this.$refs.stepper.next()
+            Toast.create['positive']('Success! Please record your contract address')
             console.log(res)
           })
           .catch(err => {
