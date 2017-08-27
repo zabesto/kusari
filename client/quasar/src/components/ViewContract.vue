@@ -19,9 +19,7 @@
     <span>Manager Address: {{ contract.managerAddress }}</span><br><br>
     <span>Manager Name: {{ contract.manager }}</span><br><br>
     <span>Spec Link: <a :href="'http://ipfs.io/ipfs/' + contract.specLink" target="_blank">{{ contract.specLink }}</a></span><br><br>
-  <q-btn>
-    <a :href="'http://ipfs.io/ipfs/' + contract.specLink" download>Download</a>
-</q-btn><br><br>
+    <br />
     <span>Award Date: {{ contract.award }}</span><br><br>
     <span>Bidding Date: {{ contract.bidding }}</span><br><br>
     <span>Reveal Date: {{ contract.reveal }}</span><br><br>
@@ -116,6 +114,9 @@ export default {
         .then(res => {
           console.log(res)
           this.contract = res.data
+          this.contract.award = new Date(res.data.award).toString()
+          this.contract.bidding = new Date(res.data.bidding).toString()
+          this.contract.reveal = new Date(res.data.reveal).toString()
           this.$refs.stepper.next()
           this.contract.bidder = res.data.bidder
           console.log(this.contract.whitelist)

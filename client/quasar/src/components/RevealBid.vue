@@ -12,7 +12,7 @@
           <br />
         </q-field>
         <q-field>
-          <q-input v-model='bidderKey' stack-label='Enter Your Key' v-on:keyup.enter='$refs.stepper.next()' :error='keyvalid' />
+          <q-input v-model='bidderKey' stack-label='Enter Your Key' v-on:keyup.enter='$refs.stepper.next()' />
           <br />
         </q-field>
         <q-btn @click='searchContract'>Reveal</q-btn>
@@ -52,28 +52,16 @@ export default {
       url: 'http://localhost:8080',
       addressError: [],
       message: '',
-      contractAddress: '',
-      bidderAddress: '',
-      bidderKey: '',
-      contract: {
-        name: null,
-        manager: null,
-        managerAddress: null,
-        specLink: null,
-        whitelist: [],
-        periods: {
-          award: null,
-          bidding: null,
-          reveal: null
-        }
-      },
-      canGoBack: window.history.length > 1
+      contractAddress: this.$store.state.contract,
+      bidderAddress: this.$store.state.account,
+      bidderKey: ''
     }
   },
   methods: {
     searchContract () {
-      this.$http.post('http://localhost:5000/reveal/', {ownerAddr: this.contractAddress, bidderAddr: this.bidderAddress, bidderKey: this.bidderKey})
+      this.$http.post('/api/drfp/reveal', {contractAddr: this.contractAddress, bidderAddr: this.bidderAddress, privateKey: this.bidderKey})
         .then(response => {
+          console.log(response)
           if (response.data === 'success') {
             this.$refs.successmodal.open()
           }

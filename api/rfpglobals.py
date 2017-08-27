@@ -31,6 +31,8 @@ SC_OWNER_ADDR = 'ownerAddr'
 SC_BIDDER_ADDR = 'bidderAddr'
 SC_CONTRACT_ADDR = 'contractAddr'
 
+SC_PRIVATE_KEY = 'privateKey'
+
 SC_FILE = DRFP_FILE
 
 ''' key pair generator '''

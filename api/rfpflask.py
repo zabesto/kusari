@@ -1,14 +1,15 @@
 import base64
-import ipfsapi                              # Peer to Peer distributed storage
+import ipfsapi                                             # Peer to Peer distributed storage
 import json
+import os
 import time
 
-from Crypto.PublicKey import RSA            # Python key pair generator
-from flask import Flask, jsonify, request   # Python microframework
-from io import FileIO                       # Create temp file to upload to IPFS
+from Crypto.PublicKey import RSA                           # Python key pair generator
+from flask import Flask, jsonify, request, make_response   # Python microframework
+from io import FileIO                                      # Create temp file to upload to IPFS
 from rfpglobals import *
-from solc import compile_files              # Python wrapper for the Solidity compiler
-from web3 import Web3, HTTPProvider         # Python implementation of Web3 to interact with the blockchain
+from solc import compile_files                             # Python wrapper for the Solidity compiler
+from web3 import Web3, HTTPProvider                        # Python implementation of Web3 to interact with the blockchain
 
 DEBUG = True
 
@@ -50,6 +51,8 @@ def upload(file):
 	printd(result['Hash'])
 
 	# TODO: delete file
+	os.remove(FILE_NAME)
+
 	return result
 
 ''' Web3 '''
@@ -183,7 +186,7 @@ def bid_proposal():
 		rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
 		rfc_instance.call({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
 	except ValueError:
-		return 'Unauthorized bidder'
+		return make_response('Unauthorized bidder', 401)
 
 	return jsonify(keys)
 
