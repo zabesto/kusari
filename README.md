@@ -25,14 +25,14 @@ https://ipfs.io/docs/install/#installing-from-a-prebuilt-package
 sudo mv go-ipfs/ipfs /usr/local/bin/ipfs
 
 ```sh
-# start flask server
-cd ~/kusari/api
-export FLASK_APP=rfpflask.py
-flask run
-
 # start ipfs
 ipfs daemon
 
 # start test rpc
 testrpc
+
+# start flask server
+cd ~/kusari/api
+export FLASK_APP=rfpflask.py
+flask run
 ```
