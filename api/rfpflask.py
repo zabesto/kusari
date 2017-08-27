@@ -178,8 +178,12 @@ def bid_proposal():
 	keys = generate_keypair()
 
 	rfc_instance = DRFPContract(contract_addr)
-	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
-	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
+
+	try:
+		rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
+		rfc_instance.call({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
+	except ValueError:
+		return 'Unauthorized bidder'
 
 	return jsonify(keys)
 

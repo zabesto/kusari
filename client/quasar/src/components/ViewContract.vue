@@ -18,9 +18,9 @@
     <span>Contract Name: {{ contract.name }}</span><br><br>
     <span>Manager Address: {{ contract.managerAddress }}</span><br><br>
     <span>Manager Name: {{ contract.manager }}</span><br><br>
-    <span>Spec Link: <a :href="contract.specLink" target="_blank">{{ contract.specLink }}</a></span><br><br>
+    <span>Spec Link: <a :href="'http://ipfs.io/ipfs/' + contract.specLink" target="_blank">{{ contract.specLink }}</a></span><br><br>
   <q-btn>
-    <a :href="contract.specLink" target="_blank" download>Download</a>
+    <a :href="'http://ipfs.io/ipfs/' + contract.specLink" download>Download</a>
 </q-btn><br><br>
     <span>Award Date: {{ contract.award }}</span><br><br>
     <span>Bidding Date: {{ contract.bidding }}</span><br><br>
@@ -31,20 +31,52 @@
         Whitelist
       </q-card-title>
       <q-card-actions >
-        <q-btn flat v-for="item in contract.whitelist" :key="item">{{ item }}</q-btn>
+        <q-btn flat v-for="data in contract.whitelist" :key="data">{{ data }}</q-btn>
       </q-card-actions>
     </q-card>
+     <q-card inline>
+      <q-card-title>
+        All Bids
+      </q-card-title>
+      <q-list separator>
+        <q-collapsible v-for="item in contract.bidder" :key="item" icon="perm_identity" :label=" item.Bidder ">
+            <q-list highlight inset-separator>
+          <q-item> <q-item-main label="FileLink" :sublabel=" item.FileLink "/>
+           </q-item>
+           <q-item>
+             <q-item-main label="PrivateKey" :sublabel= " item.PrivateKey "/>
+        </q-item>
+            </q-list>
+        </q-collapsible>
+         <!-- <q-collapsible icon="perm_identity" label="IBM">
+            <q-list highlight inset-separator>
+        <q-item>
+          <q-item-main label="Bidder" label-lines="1"  sublabel="MIGfMA0GCSqGSIb3DQEBAQUAA4GNA3DQEBAQUAA4GNqGKukO1De7zhZj6+H0q"/>
+          <q-item-main label="FileLink" label-lines="1"  sublabel="0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"/>
+          <q-item-main label="PrivateKey" label-lines="1"  sublabel="0x5026e08219a6371ebd63afc4fa902bbf125c08a842a0221926be94bcf439f3e3"/>
+        </q-item>
+            </q-list>
+        </q-collapsible> -->
+      </q-list>
+    </q-card>
       </q-step>
+      
     </q-stepper>
+   
   </div>
 </template>
 
 <script>
-import { QCard, QStepper, QStep, QCardTitle, QBtn, QCardActions, QIcon, QInput, QField, QChipsInput, QDatetime, QUploader } from 'quasar'
+import { QCard, QList, QItem, QItemSide, QItemMain, QCollapsible, QStepper, QStep, QCardTitle, QBtn, QCardActions, QIcon, QInput, QField, QChipsInput, QDatetime, QUploader } from 'quasar'
 export default {
   components: {
     QBtn,
     QCard,
+    QList,
+    QItem,
+    QItemSide,
+    QItemMain,
+    QCollapsible,
     QStepper,
     QStep,
     QCardTitle,
@@ -85,6 +117,8 @@ export default {
           console.log(res)
           this.contract = res.data
           this.$refs.stepper.next()
+          this.contract.bidder = res.data.bidder
+          console.log(this.contract.whitelist)
         })
         .catch(e => {
           console.log(e)
