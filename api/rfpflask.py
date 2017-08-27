@@ -4,6 +4,7 @@ import json
 import os
 import time
 
+from Crypto.Cipher import PKCS1_OAEP					   # Encryption
 from Crypto.PublicKey import RSA                           # Python key pair generator
 from flask import Flask, jsonify, request, make_response   # Python microframework
 from io import FileIO                                      # Create temp file to upload to IPFS
@@ -27,18 +28,12 @@ PORT_IPFS = 5001
 ipfs = ipfsapi.connect(HOST_IPFS, PORT_IPFS)
 
 def upload(file):
-	# decode file
-	printd('decoding file...')
-	BASE64_PREFIX = 'data:text/markdown;base64,'   # TODO update to use regex
-	base64_file = file.replace(BASE64_PREFIX, '')
-	decoded_file = base64.b64decode(base64_file)
-
 	FILE_NAME = 'temp_file.txt'
 
 	# write to temp file
 	printd('creating temp file...')
 	with FileIO(FILE_NAME, 'w') as temp_file:
-		temp_file.write(decoded_file)
+		temp_file.write(file)
 
 	# upload to ipfs
 	printd('uploading file...')
@@ -50,6 +45,14 @@ def upload(file):
 	os.remove(FILE_NAME)
 
 	return result
+
+def decode(file):
+	printd('decoding file...')
+	BASE64_PREFIX = 'data:text/markdown;base64,'   # TODO update to use regex
+	base64_file = file.replace(BASE64_PREFIX, '')
+	decoded_file = base64.b64decode(base64_file)
+
+	return decoded_file
 
 ''' Web3 '''
 
@@ -84,15 +87,6 @@ def create_bidder(id):
 		return testrpc.eth.accounts[MAX_ID]
 
 	return jsonify(testrpc.eth.accounts[id])
-
-'''
-	Returns the request data.
-
-	- returns the request data
-'''
-@app.route(ROUTE_DRFP + '/create/dummy', methods=['POST'])
-def create_drfp_dummy():
-	return jsonify(request.data)
 
 '''
 	Create a new DRFP.
@@ -171,15 +165,26 @@ def bid_proposal():
 	request_body = request.get_json()
 	bidder_addr = request_body[SC_BIDDER_ADDR]
 	contract_addr = request_body[SC_CONTRACT_ADDR]
+	file = request_body[SC_FILE]
 	
-	# get hash of ipfs file
-	upload_results = upload(request_body[SC_FILE])
-	file_hash = upload_results['Hash']
+	decoded_file = decode(file)
 
 	keys = generate_keypair()
+	public_key = keys[0]
 
 	rfc_instance = DRFPContract(contract_addr)
-	rfc_instance.transact({'from': bidder_addr, 'gas':1000000}).addPublicKey(keys[0])
+	rfc_instance.transact({'from': bidder_addr, 'gas':1000000}).addPublicKey(public_key)
+
+	# encrypt file
+	printd('encrypting file...')
+	rsa_key = RSA.importKey(public_key)
+	cipher = PKCS1_OAEP.new(rsa_key)
+	encrypted_file = cipher.encrypt(decoded_file)
+	printd(encrypted_file)
+
+	# get hash of ipfs file
+	upload_results = upload(encrypted_file)
+	file_hash = upload_results['Hash']
 	rfc_instance.transact({'from': bidder_addr, 'gas':1000000}).addBidLocation(file_hash)
 
 	return jsonify(keys)
@@ -227,9 +232,11 @@ def compile_drfp_sol():
 '''
 def get_args(params):
 	printd('extracting args...')
+	file = params[DRFP_FILE]
+	decoded_file = decode(file)
 
 	# get ipfs hash for spec and template
-	upload_results = upload(params[DRFP_FILE])
+	upload_results = upload(decoded_file)
 	file_hash = upload_results['Hash']
 
 	# get nested periods
@@ -268,7 +275,7 @@ def generate_keypair():
 	- msg: The message to print
 '''
 def printd(msg):
-	if DEBUG == False:
+	if DEBUG == True:
 		return
 	print '##########   %s   ##########' % (msg)
 
