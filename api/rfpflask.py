@@ -12,8 +12,6 @@ from rfpglobals import *
 from solc import compile_files                             # Python wrapper for the Solidity compiler
 from web3 import Web3, HTTPProvider                        # Python implementation of Web3 to interact with the blockchain
 
-DEBUG = True
-
 # flask server
 app = Flask(__name__)
 
@@ -189,6 +187,19 @@ def bid_proposal():
 
 	return jsonify(keys)
 
+@app.route(ROUTE_DRFP + '/decrypt', methods=['POST'])
+def decrypt():
+	request_body = request.get_json()
+	private_key = request_body[SC_PRIVATE_KEY]
+	encrypted_file = request_body[SC_FILE]
+	decoded_file = base64.b64decode(encrypted_file)
+
+	rsa_key = RSA.importKey(private_key)
+	cipher = PKCS1_OAEP.new(rsa_key)
+	decrypted_file = cipher.decrypt(decoded_file)
+
+	print jsonif(decrypted_file)
+
 '''
 	Reveal the private key for the IPFS file that was submitted by the bidder.
 
@@ -275,7 +286,7 @@ def generate_keypair():
 	- msg: The message to print
 '''
 def printd(msg):
-	if DEBUG == True:
+	if DEBUG == False:
 		return
 	print '##########   %s   ##########' % (msg)
 
