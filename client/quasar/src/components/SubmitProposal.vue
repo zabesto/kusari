@@ -21,7 +21,6 @@
 
 <script>
 import {QBtn, QIcon, QField, QInput, QStepper, QStep, QUploader} from 'quasar'
-
 export default {
   components: {
     QBtn,
