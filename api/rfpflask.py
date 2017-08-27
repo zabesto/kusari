@@ -125,7 +125,6 @@ def create_drfp():
 	printd('fetching transaction for smart contract instance...')
 	trans_receipt = testrpc.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
-	global rfc_instance
 	rfc_instance = DRFPContract(contract_addr)
 
 	# generate whitelist
@@ -177,6 +176,11 @@ def bid_proposal():
 	file_hash = upload_results['Hash']
 
 	keys = generate_keypair()
+
+	rfc_instance = DRFPContract(contract_addr)
+	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
+	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
+
 	return jsonify(keys)
 
 '''
@@ -189,8 +193,12 @@ def reveal_ipfs_key():
 	request_body = request.get_json()
 	bidder_addr = request_body[SC_BIDDER_ADDR]
 	contract_addr = request_body[SC_CONTRACT_ADDR]
+	private_key = request_body[SC_PRIVATE_KEY]
 
-	return get_from_rfp_store(contract_addr, bidder_addr)
+	rfc_instance = DRFPContract(contract_addr)
+	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPrivateKey(private_key)
+
+	return 'success'
 
 def add_to_rfp_store(contract_addr, bidder_addr, file_hash):
 	bid_dict = {}
