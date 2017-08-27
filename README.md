@@ -1,6 +1,5 @@
 # kusari FTW!
 
-
 ## API
 
 ### Install Dependencies
@@ -19,11 +18,13 @@ brew install ethereum
 brew install solidity
 npm install -g ethereumjs-testrpc
 npm install -g truffle
+
+# install ipfs
+[IPFS](https://ipfs.io/docs/install/#installing-from-a-prebuilt-package)
+sudo mv go-ipfs/ipfs /usr/local/bin/ipfs
 ```
 
 ### Run
-https://ipfs.io/docs/install/#installing-from-a-prebuilt-package
-sudo mv go-ipfs/ipfs /usr/local/bin/ipfs
 
 ```sh
 # start ipfs

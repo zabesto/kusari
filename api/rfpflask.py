@@ -19,10 +19,6 @@ app = Flask(__name__)
 # testrpc
 testrpc = Web3(HTTPProvider('http://localhost:8545'))
 
-''' Storage '''
-
-rfp_store = {}
-
 ''' IPFS '''
 
 HOST_IPFS = '127.0.0.1'
@@ -205,18 +201,6 @@ def reveal_ipfs_key():
 
 	return 'success'
 
-def add_to_rfp_store(contract_addr, bidder_addr, file_hash):
-	bid_dict = {}
-	bid_dict[bidder_addr] = file_hash
-	rfp_store[contract_addr] = bid_dict
-
-	return 'ok'
-
-def get_from_rfp_store(contract_addr, bidder_addr):
-	bid_dict = rfp_store[contract_addr]
-
-	return jsonify(bid_dict[bidder_addr])
-
 def compile_drfp_sol():
 	CONTRACT_NAME = 'drfp'
 	FILE_NAME = CONTRACT_NAME + '.sol'
@@ -262,16 +246,6 @@ def get_args(params):
 	args.append(int(periods[DRFP_AWARD]))
 
 	return args
-
-'''
-	Get the IPFS hash from the given file.
-
-	- file: The file to be added to IPFS
-
-	- returns the IPFS hash
-'''
-def get_ipfs_hash(file):
-	return upload()['hash']
 
 '''
 	Generate keypair.
