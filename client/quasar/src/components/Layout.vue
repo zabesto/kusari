@@ -16,6 +16,12 @@
         dRFP
         <div slot="subtitle">Decentralized Contract Proposals</div>
       </q-toolbar-title>
+      <q-btn :disabled="account=='owner'" @click='owner' flat>
+        Owner
+      </q-btn>
+      <q-btn :disable="account=='bidder'" @click='bidder' flat>
+        Bidder
+      </q-btn>
     </q-toolbar>
 
     <div slot="left">
@@ -66,7 +72,6 @@
 
 <script>
 import {
-  openURL,
   QLayout,
   QToolbar,
   QToolbarTitle,
@@ -95,27 +100,31 @@ export default {
   },
   data () {
     return {
+      account: 'owner',
+      key: ''
     }
   },
   computed: {
   },
   methods: {
-    launch (url) {
-      openURL(url)
+    owner () {
+      this.$http.get('/api/drfp/account/owner')
+        .then(res => {
+          this.account = 'owner'
+          this.key = res.data
+          window.localStorage.setItem('account', res.data)
+        })
+    },
+    bidder () {
+      this.$http.get('/api/drfp/account/bidder/1')
+        .then(res => {
+          this.account = 'bidder'
+          this.key = res.data
+          window.localStorage.setItem('account', res.data)
+        })
     }
   },
   mounted () {
-    this.$nextTick(() => {
-      if (this.orienting) {
-        window.addEventListener('deviceorientation', this.orient, false)
-      }
-      else if (this.rotating) {
-        window.addEventListener('devicemove', this.rotate, false)
-      }
-      else {
-        document.addEventListener('mousemove', this.move)
-      }
-    })
   }
 }
 </script>

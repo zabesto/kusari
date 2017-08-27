@@ -81,15 +81,7 @@ export default {
     QStepperNavigation
   },
   mounted () {
-    this.$http.get('/api/drfp/account/owner')
-      .then(res => {
-        console.log(res.data)
-        this.account = res.data
-      })
-      .catch(e => {
-        console.log(e)
-        this.account = null
-      })
+    this.account = window.localStorage.getItem('account')
   },
   data () {
     return {
@@ -118,10 +110,15 @@ export default {
     submit () {
       console.log(this.$refs.upload.files[0])
       this.$file(this.$refs.upload.files[0]).then((file) => {
-        this.contract.file = file
-        this.contract.account = this.account
-        console.log(JSON.stringify(this.contract))
-        this.$http.post('/api/drfp/create', this.contract)
+        var contract = Object.assign({}, this.contract)
+        contract.file = file
+        contract.account = this.account
+        console.log(contract.periods.bidding)
+        contract.periods.bidding = Date.parse(contract.periods.bidding)
+        contract.periods.reveal = Date.parse(contract.periods.reveal)
+        contract.periods.award = Date.parse(contract.periods.reveal)
+        console.log(JSON.stringify(contract))
+        this.$http.post('/api/drfp/create', contract)
           .then(res => {
             this.$refs.stepper.next()
             Toast.create['positive']('Success! Please record your contract address')

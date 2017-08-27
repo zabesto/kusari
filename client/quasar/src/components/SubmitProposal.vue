@@ -73,7 +73,11 @@ export default {
       this.$file(this.$refs.upload.files[0]).then((file) => {
         this.file = file
         console.log(JSON.stringify(this.contract))
-        this.$http.post('/api/drfp/proposal/' + this.address, this.file)
+        this.$http.post('/api/drfp/proposal/', {
+          file: this.file,
+          contractAddr: this.address,
+          bidderAddr: this.$store.state.adress
+        })
           .then(res => {
             Toast.create['positive']({
               html: 'Success! Your proposal has been submitted.'
