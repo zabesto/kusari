@@ -5,6 +5,7 @@ contract drfp {
 
     struct Bidder {
         bool isValid;
+        address account;
         string name;
         string publicKey;
         string bidLocation;
@@ -29,6 +30,7 @@ contract drfp {
 
     mapping (address => Bidder) public bidders;
     address[] public bidderWhitelist;
+    address public testAddress;
 
     enum RFPPeriods { Advertising, Bidding, Reveal, Award }
     RFPPeriods constant defaultChoice = RFPPeriods.Advertising;
@@ -69,16 +71,24 @@ contract drfp {
         periodStarts.biddingStart = biddingStart;
         periodStarts.revealStart = revealStart;
         periodStarts.awardDate = awardDate;
+
+        // TEMP
+        //bidderWhitelist.push(0xb9b35f2bd3b6e13721a349bde7f1f0a902ae7e57);
     }
 
     function getWhitelist() returns (address[]){
         return bidderWhitelist;
     }
 
+//    function getWhitelist(int index) returns (address){
+//        return bidderWhitelist(index);
+//    }
+
     function addBidder(address _address)
         onlyOwner() {
         //onlyBefore(periodStarts.biddingStart) {
-        bidders[_address] = Bidder(true, "", "", "", "");
+        bidders[_address] = Bidder(true, _address, "", "", "", "");
+        testAddress = _address;
         bidderWhitelist.push(_address);
     }
 

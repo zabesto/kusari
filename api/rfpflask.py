@@ -129,10 +129,11 @@ def create_drfp():
 	trans_receipt = testrpc.eth.getTransactionReceipt(trans_hash)
 	contract_addr = trans_receipt['contractAddress']
 	rfc_instance = DRFPContract(contract_addr)
-
 	# generate whitelist
+
+
 	for addr in request_body[DRFP_WHITELIST]:
-		rfc_instance.call({'from': owner_addr, 'gas':1000000}).addBidder(addr)
+		rfc_instance.transact({'from': owner_addr, 'gas':1000000}).addBidder(addr)
 
 	return jsonify(contract_addr)
 
@@ -157,11 +158,12 @@ def find_contract():
 	response[SC_AWARD] = instance.call({'from': owner_addr}).periodStarts()[3]
 	response[SC_REVEAL] = instance.call({'from': owner_addr}).periodStarts()[2]
 	response[SC_BIDDING] = instance.call({'from': owner_addr}).periodStarts()[1]
+	response[SC_WHITELIST] = instance.call({'from': owner_addr}).getWhitelist()
 
-	#bidders = instance.call({'from': owner_addr}).bidders()
-	#response['bidders'] = bidders
-	whitelist = []
-	#response[SC_WHITELIST] = instance.call({'from': owner_addr}).getWhitelist()
+	response[SC_BIDDERS] = []
+	for addr in response[SC_WHITELIST]:
+		bidder = instance.call({'from': owner_addr}).bidders(addr)
+		response[SC_BIDDERS].append(bidder)
 
 	return jsonify(response)
 
@@ -183,8 +185,8 @@ def bid_proposal():
 	rfc_instance = DRFPContract(contract_addr)
 
 	try:
-		rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
-		rfc_instance.call({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
+		rfc_instance.transact({'from': bidder_addr, 'gas':100000}).addPublicKey(keys[0])
+		rfc_instance.transact({'from': bidder_addr, 'gas':100000}).addBidLocation(file_hash)
 	except ValueError:
 		return make_response('Unauthorized bidder', 401)
 
@@ -203,7 +205,7 @@ def reveal_ipfs_key():
 	private_key = request_body[SC_PRIVATE_KEY]
 
 	rfc_instance = DRFPContract(contract_addr)
-	rfc_instance.call({'from': bidder_addr, 'gas':100000}).addPrivateKey(private_key)
+	rfc_instance.transact({'from': bidder_addr, 'gas':100000}).addPrivateKey(private_key)
 
 	return 'success'
 
