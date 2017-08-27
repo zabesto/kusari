@@ -79,7 +79,7 @@ export default {
         var load = {
           file: this.file,
           contractAddr: this.contractAddress,
-          bidderAddr: this.$store.state.adress
+          bidderAddr: this.managerAddress
         }
         console.log(load)
         this.$http.post('/api/drfp/proposal', load)
@@ -87,6 +87,7 @@ export default {
             Toast.create['positive']({
               html: 'Success! Your proposal has been submitted.'
             })
+            this.$refs.stepper.next()
             console.log(res)
           })
           .catch(err => {
