@@ -110,17 +110,15 @@ export default {
     owner () {
       this.$http.get('/api/drfp/account/owner')
         .then(res => {
-          this.account = 'owner'
-          this.key = res.data
-          window.localStorage.setItem('account', res.data)
+          this.$store.commit('setAddress', this.key)
+          this.$store.commit('setType', 'owner')
         })
     },
     bidder () {
       this.$http.get('/api/drfp/account/bidder/1')
         .then(res => {
-          this.account = 'bidder'
-          this.key = res.data
-          window.localStorage.setItem('account', res.data)
+          this.$store.commit('setAddress', this.key)
+          this.$store.commit('setType', 'bidder')
         })
     }
   },

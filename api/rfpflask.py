@@ -16,6 +16,10 @@ app = Flask(__name__)
 # testrpc
 testrpc = Web3(HTTPProvider('http://localhost:8545'))
 
+''' Storage '''
+
+rfp_store = {}
+
 ''' IPFS '''
 
 HOST_IPFS = '127.0.0.1'
@@ -32,14 +36,18 @@ def upload(file):
 	base64_file = file.replace(BASE64_PREFIX, '')
 	decoded_file = base64.b64decode(base64_file)
 
+	FILE_NAME = 'temp_file.txt'
+
 	# write to temp file
 	printd('creating temp file...')
-	with FileIO('temp_file', 'w') as temp_file:
+	with FileIO(FILE_NAME, 'w') as temp_file:
 		temp_file.write(decoded_file)
 
 	# upload to ipfs
 	printd('uploading file...')
-	result = ipfs.add('temp_file')
+	result = ipfs.add(FILE_NAME)
+
+	printd(result['Hash'])
 
 	return result
 
@@ -48,16 +56,16 @@ def upload(file):
 ROUTE_DRFP='/drfp'
 
 # DRFP params
-DRFP_ACCOUNT = 'account'
-DRFP_OWNER = 'manager'
-DRFP_NAME = 'name'
+DRFP_ACCOUNT = 'account'           # account address
+DRFP_OWNER = 'manager'             # name of the manager
+DRFP_NAME = 'name'                 # name of the contract
 DRFP_WHITELIST = 'whitelist'
 DRFP_PERIODS = 'periods'
-DRFP_ADVERTISING = 'advertising'
-DRFP_BIDDING = 'bidding'
-DRFP_REVEAL = 'reveal'
-DRFP_AWARD = 'award'
-DRFP_FILE = 'file'
+DRFP_ADVERTISING = 'advertising'   # nested in periods
+DRFP_BIDDING = 'bidding'           # nested in periods
+DRFP_REVEAL = 'reveal'             # nested in periods
+DRFP_AWARD = 'award'               # nested in periods
+DRFP_FILE = 'file'                 # base64 encrypted file
 
 '''
 	Return the DRFP parameters.
@@ -125,7 +133,6 @@ def create_drfp_dummy():
 '''
 	Create a new DRFP.
 
-
 	- returns the results
 
 '''
@@ -156,6 +163,10 @@ def create_drfp():
 	global rfc_instance
 	rfc_instance = DRFPContract(contract_addr)
 
+	# generate whitelist
+	for addr in request_body[DRFP_WHITELIST]:
+		rfc_instance.instance.call({'from': owner_addr}).addBidder(addr)
+
 	return jsonify(contract_addr)
 
 # smart contract params
@@ -170,8 +181,16 @@ SC_AWARD = DRFP_AWARD
 SC_WHITELIST = DRFP_WHITELIST
 
 SC_OWNER_ADDR = 'ownerAddr'
+SC_BIDDER_ADDR = 'bidderAddr'
 SC_CONTRACT_ADDR = 'contractAddr'
 
+SC_FILE = DRFP_FILE
+
+'''
+	Fetch the contract.
+
+	- returns the contract
+'''
 @app.route(ROUTE_DRFP + '/search', methods=['POST'])
 def find_contract():
 	request_body = request.get_json()
@@ -180,11 +199,58 @@ def find_contract():
 
 	instance = DRFPContract(contract_addr)
 
-	owner = instance.call({'from':contract_addr})
-	printd(owner)
+	response = {}
+	response[SC_NAME] = instance.call({'from': owner_addr}).bidPackage()[0]
+	response[SC_OWNER] = instance.call({'from': owner_addr}).bidManager()
+	response[SC_OWNER_ADDR] = owner_addr
+	response[SC_LINK] = instance.call({'from': owner_addr}).bidPackage()[1]
+	response[SC_WHITELIST] = []
+	response[SC_AWARD] = instance.call({'from': owner_addr}).periodStarts()[3]
+	response[SC_REVEAL] = instance.call({'from': owner_addr}).periodStarts()[2]
+	response[SC_BIDDING] = instance.call({'from': owner_addr}).periodStarts()[1]
 
-	return owner
+	return jsonify(response)
 
+'''
+	Upload the bidder proposal.
+'''
+@app.route(ROUTE_DRFP + '/proposal', methods=['POST'])
+def bid_proposal():
+	request_body = request.get_json()
+	bidder_addr = request_body[SC_BIDDER_ADDR]
+	contract_addr = request_body[SC_CONTRACT_ADDR]
+	
+	# get hash of ipfs file
+	upload_results = upload(request_body[SC_FILE])
+	file_hash = upload_results['Hash']
+
+	# store the hash
+	return add_to_rfp_store(contract_addr, bidder_addr, file_hash)
+
+'''
+	Reveal the private key for the IPFS file that was submitted by the bidder.
+
+	- returns the private key for the IPFS file
+'''
+@app.route(ROUTE_DRFP + '/reveal', methods=['POST'])
+def reveal_ipfs_key():
+	request_body = request.get_json()
+	bidder_addr = request_body[SC_BIDDER_ADDR]
+	contract_addr = request_body[SC_CONTRACT_ADDR]
+
+	return get_from_rfp_store(contract_addr, bidder_addr)
+
+def add_to_rfp_store(contract_addr, bidder_addr, file_hash):
+	bid_dict = {}
+	bid_dict[bidder_addr] = file_hash
+	rfp_store[contract_addr] = bid_dict
+
+	return 'ok'
+
+def get_from_rfp_store(contract_addr, bidder_addr):
+	bid_dict = rfp_store[contract_addr]
+
+	return jsonify(bid_dict[bidder_addr])
 
 def compile_drfp_sol():
 	CONTRACT_NAME = 'drfp'
