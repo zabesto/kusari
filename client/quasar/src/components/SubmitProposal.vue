@@ -28,12 +28,8 @@
 </template>
 
 <script>
-<<<<<<< HEAD
 import {QBtn, QIcon, QField, QInput, QStepper, QStep, QUploader, Toast} from 'quasar'
 
-=======
-import {QBtn, QIcon, QField, QInput, QStepper, QStep, QUploader} from 'quasar'
->>>>>>> 24feca0664f3005d2b1e58093ca9493ede3f4cff
 export default {
   components: {
     QBtn,
