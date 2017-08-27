@@ -4,8 +4,9 @@ import json
 import time
 
 from flask import Flask, jsonify, request   # Python microframework
-from solc import compile_files              # Python wrapper for the Solidity compiler
 from io import FileIO
+from rfpglobals import *
+from solc import compile_files              # Python wrapper for the Solidity compiler
 from web3 import Web3, HTTPProvider         # Python implementation of Web3 to interact with the blockchain
 
 DEBUG = True
@@ -24,8 +25,6 @@ rfp_store = {}
 
 HOST_IPFS = '127.0.0.1'
 PORT_IPFS = 5001
-
-ROUTE_IPFS='/ipfs'
 
 ipfs = ipfsapi.connect(HOST_IPFS, PORT_IPFS)
 
@@ -52,42 +51,6 @@ def upload(file):
 	return result
 
 ''' Web3 '''
-
-ROUTE_DRFP='/drfp'
-
-# DRFP params
-DRFP_ACCOUNT = 'account'           # account address
-DRFP_OWNER = 'manager'             # name of the manager
-DRFP_NAME = 'name'                 # name of the contract
-DRFP_WHITELIST = 'whitelist'
-DRFP_PERIODS = 'periods'
-DRFP_ADVERTISING = 'advertising'   # nested in periods
-DRFP_BIDDING = 'bidding'           # nested in periods
-DRFP_REVEAL = 'reveal'             # nested in periods
-DRFP_AWARD = 'award'               # nested in periods
-DRFP_FILE = 'file'                 # base64 encrypted file
-
-'''
-	Return the DRFP parameters.
-
-	- returns the DRFP parameters as a json string
-'''
-@app.route(ROUTE_DRFP + '/params')
-def get_params():
-	periods = {}
-	periods[DRFP_BIDDING] = 'uint'
-	periods[DRFP_REVEAL] = 'uint'
-	periods[DRFP_AWARD] = 'uint'
-
-	params = {}
-	params[DRFP_ACCOUNT] = 'String'
-	params[DRFP_OWNER] = 'String'
-	params[DRFP_NAME] = 'String'
-	params[DRFP_WHITELIST] = '[String]'
-	params[DRFP_PERIODS] = periods
-	params[DRFP_FILE] = 'file'
-
-	return jsonify(params)
 
 '''
 	Fetch the existing owner.
@@ -165,26 +128,9 @@ def create_drfp():
 
 	# generate whitelist
 	for addr in request_body[DRFP_WHITELIST]:
-		rfc_instance.instance.call({'from': owner_addr}).addBidder(addr)
+		rfc_instance.call({'from': owner_addr, 'gas':100000}).addBidder(addr)
 
 	return jsonify(contract_addr)
-
-# smart contract params
-SC_NAME = DRFP_NAME
-SC_OWNER = DRFP_OWNER
-SC_ADDR = 'managerAddress'
-SC_LINK = 'specLink'
-SC_PERIODS = DRFP_PERIODS
-SC_BIDDING = DRFP_BIDDING
-SC_REVEAL = DRFP_REVEAL
-SC_AWARD = DRFP_AWARD
-SC_WHITELIST = DRFP_WHITELIST
-
-SC_OWNER_ADDR = 'ownerAddr'
-SC_BIDDER_ADDR = 'bidderAddr'
-SC_CONTRACT_ADDR = 'contractAddr'
-
-SC_FILE = DRFP_FILE
 
 '''
 	Fetch the contract.
