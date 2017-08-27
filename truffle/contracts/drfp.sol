@@ -60,6 +60,7 @@ contract drfp {
     function drfp(string bidManagerName, string rfpName, string specLocation,
                     uint advertisingStart, uint biddingStart, uint revealStart, uint awardDate)
     {
+        owner = msg.sender;
         bidManager.name = bidManagerName;
         bidPackage.name = rfpName;
         bidPackage.specLocation = specLocation;
